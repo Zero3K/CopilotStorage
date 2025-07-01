@@ -1,0 +1,682 @@
++----------------------------------+  
+|                                  |  
+|     CCSIO Benchmark, 1.5.4.0     |  
+|                                  |  
++----------------------------------+  
+                                
+Recorded                        2025/06/23 23:43:13
+Platform                        2.6.1.7601.-.-.-.1.1.1 / 64 bit
+MD5(MachineGuid)                daf7fe8fc0c96a65f2fc11327a14fd8b
+                                
+Volume.file_system              FAT32
+Volume.type                     Simple
+                                
+Device.type                     HDD
+Device.vendor                   PSS_LAB
+Device.model                    PHANTOM
+Device.bus                      6 / 6
+Device.controller               Demo StorPort Virtual Adapter
+                                
+Test.path                       F:\
+Test.remote                     No
+Test.file.size                  3221225472
+Test.io.buffer_sizes            1024 2048 4096 8192 16384 32768 65536 131072 262144 524288 1048576 2097152 4194304 8388608 16777216 33554432 67108864 
+Test.io.buffer_counts           1 2 4 8 12 16 24 32 
+Test.io.memory_cap              268435456
+Test.duration                   1000
+Test.order                      3
+Test.cache_trim                 2
+                                
+Test.read.modes                 0x13
+Test.read.fill                  random
+Test.write.modes                0x03
+Test.write.fill                 random
+Test.write.flush                No
+                                
+Read.tests                      375 / 375
+Read.tests.failed               -
+Read.best.speed.binary          14292.3 MBps
+Read.best.speed.decimal         14986.5 MBps
+Read.best.io                    4 x 524288 bytes, raw seq
+Read.99_perc                    1
+Read.95_perc                    2
+                                
+Write.tests                     250 / 250
+Write.tests.failed              -
+Write.best.speed.binary         10290.8 MBps
+Write.best.speed.decimal        10790.7 MBps
+Write.best.io                   4 x 262144 bytes, raw    
+Write.99_perc                   1
+Write.95_perc                   1
+                                
+--- Read measurements ---       
+                                
+   1  |   1 x      1024  |  raw      |       87.1 MBps       91.3 MBps  |  +      
+   2  |   1 x      1024  |  raw seq  |       85.0 MBps       89.1 MBps  |         
+   3  |   1 x      1024  |  buf seq  |      361.9 MBps      379.4 MBps  |  +      
+   4  |   2 x      1024  |  raw      |      116.3 MBps      121.9 MBps  |         
+   5  |   2 x      1024  |  raw seq  |      135.1 MBps      141.7 MBps  |         
+   6  |   2 x      1024  |  buf seq  |      390.9 MBps      409.9 MBps  |  +      
+   7  |   4 x      1024  |  raw      |       61.5 MBps       64.5 MBps  |         
+   8  |   4 x      1024  |  raw seq  |      145.0 MBps      152.0 MBps  |         
+   9  |   4 x      1024  |  buf seq  |      396.8 MBps      416.1 MBps  |  +      
+  10  |   8 x      1024  |  raw      |      170.0 MBps      178.3 MBps  |         
+  11  |   8 x      1024  |  raw seq  |      176.8 MBps      185.4 MBps  |         
+  12  |   8 x      1024  |  buf seq  |      408.5 MBps      428.4 MBps  |  +      
+  13  |  12 x      1024  |  raw      |       57.0 MBps       59.8 MBps  |         
+  14  |  12 x      1024  |  raw seq  |      164.1 MBps      172.0 MBps  |         
+  15  |  12 x      1024  |  buf seq  |      407.6 MBps      427.4 MBps  |         
+  16  |  16 x      1024  |  raw      |      167.1 MBps      175.2 MBps  |         
+  17  |  16 x      1024  |  raw seq  |      162.1 MBps      170.0 MBps  |         
+  18  |  16 x      1024  |  buf seq  |      412.0 MBps      432.0 MBps  |  +      
+  19  |  24 x      1024  |  raw      |       66.0 MBps       69.2 MBps  |         
+  20  |  24 x      1024  |  raw seq  |      115.0 MBps      120.6 MBps  |         
+  21  |  24 x      1024  |  buf seq  |      407.0 MBps      426.8 MBps  |         
+  22  |  32 x      1024  |  raw      |       71.4 MBps       74.9 MBps  |         
+  23  |  32 x      1024  |  raw seq  |       79.6 MBps       83.5 MBps  |         
+  24  |  32 x      1024  |  buf seq  |      414.8 MBps      435.0 MBps  |  +      
+  25  |   1 x      2048  |  raw      |      165.8 MBps      173.9 MBps  |         
+  26  |   1 x      2048  |  raw seq  |      168.5 MBps      176.7 MBps  |         
+  27  |   1 x      2048  |  buf seq  |      639.6 MBps      670.7 MBps  |  +      
+  28  |   2 x      2048  |  raw      |      124.6 MBps      130.7 MBps  |         
+  29  |   2 x      2048  |  raw seq  |      169.3 MBps      177.5 MBps  |         
+  30  |   2 x      2048  |  buf seq  |      678.3 MBps      711.2 MBps  |  +      
+  31  |   4 x      2048  |  raw      |      203.8 MBps      213.7 MBps  |         
+  32  |   4 x      2048  |  raw seq  |      329.9 MBps      346.0 MBps  |         
+  33  |   4 x      2048  |  buf seq  |      682.9 MBps      716.1 MBps  |  +      
+  34  |   8 x      2048  |  raw      |      166.0 MBps      174.0 MBps  |         
+  35  |   8 x      2048  |  raw seq  |      255.8 MBps      268.2 MBps  |         
+  36  |   8 x      2048  |  buf seq  |      690.2 MBps      723.8 MBps  |  +      
+  37  |  12 x      2048  |  raw      |      265.7 MBps      278.6 MBps  |         
+  38  |  12 x      2048  |  raw seq  |      354.5 MBps      371.8 MBps  |         
+  39  |  12 x      2048  |  buf seq  |      708.4 MBps      742.8 MBps  |  +      
+  40  |  16 x      2048  |  raw      |      142.6 MBps      149.6 MBps  |         
+  41  |  16 x      2048  |  raw seq  |      258.9 MBps      271.5 MBps  |         
+  42  |  16 x      2048  |  buf seq  |      706.5 MBps      740.8 MBps  |         
+  43  |  24 x      2048  |  raw      |      284.8 MBps      298.7 MBps  |         
+  44  |  24 x      2048  |  raw seq  |      323.0 MBps      338.7 MBps  |         
+  45  |  24 x      2048  |  buf seq  |      703.5 MBps      737.7 MBps  |         
+  46  |  32 x      2048  |  raw      |      178.0 MBps      186.7 MBps  |         
+  47  |  32 x      2048  |  raw seq  |      307.9 MBps      322.8 MBps  |         
+  48  |  32 x      2048  |  buf seq  |      703.5 MBps      737.7 MBps  |         
+  49  |   1 x      4096  |  raw      |      333.8 MBps      350.1 MBps  |         
+  50  |   1 x      4096  |  raw seq  |      332.5 MBps      348.6 MBps  |         
+  51  |   1 x      4096  |  buf seq  |     1052.6 MBps     1103.7 MBps  |  +      
+  52  |   2 x      4096  |  raw      |      266.3 MBps      279.3 MBps  |         
+  53  |   2 x      4096  |  raw seq  |      514.1 MBps      539.0 MBps  |         
+  54  |   2 x      4096  |  buf seq  |     1095.6 MBps     1148.8 MBps  |  +      
+  55  |   4 x      4096  |  raw      |      247.0 MBps      259.0 MBps  |         
+  56  |   4 x      4096  |  raw seq  |      322.3 MBps      338.0 MBps  |         
+  57  |   4 x      4096  |  buf seq  |     1122.5 MBps     1177.0 MBps  |  +      
+  58  |   8 x      4096  |  raw      |      443.3 MBps      464.8 MBps  |         
+  59  |   8 x      4096  |  raw seq  |      723.4 MBps      758.5 MBps  |         
+  60  |   8 x      4096  |  buf seq  |     1141.7 MBps     1197.2 MBps  |  +      
+  61  |  12 x      4096  |  raw      |      340.7 MBps      357.2 MBps  |         
+  62  |  12 x      4096  |  raw seq  |      495.2 MBps      519.3 MBps  |         
+  63  |  12 x      4096  |  buf seq  |     1139.4 MBps     1194.7 MBps  |         
+  64  |  16 x      4096  |  raw      |      553.9 MBps      580.8 MBps  |         
+  65  |  16 x      4096  |  raw seq  |      699.5 MBps      733.4 MBps  |         
+  66  |  16 x      4096  |  buf seq  |     1149.3 MBps     1205.1 MBps  |  +      
+  67  |  24 x      4096  |  raw      |      296.4 MBps      310.8 MBps  |         
+  68  |  24 x      4096  |  raw seq  |      554.4 MBps      581.3 MBps  |         
+  69  |  24 x      4096  |  buf seq  |     1147.7 MBps     1203.4 MBps  |         
+  70  |  32 x      4096  |  raw      |      509.5 MBps      534.2 MBps  |         
+  71  |  32 x      4096  |  raw seq  |      529.5 MBps      555.2 MBps  |         
+  72  |  32 x      4096  |  buf seq  |     1136.3 MBps     1191.5 MBps  |         
+  73  |   1 x      8192  |  raw      |      618.4 MBps      648.5 MBps  |         
+  74  |   1 x      8192  |  raw seq  |      640.4 MBps      671.5 MBps  |         
+  75  |   1 x      8192  |  buf seq  |     1751.9 MBps     1837.0 MBps  |  +      
+  76  |   2 x      8192  |  raw      |      488.9 MBps      512.6 MBps  |         
+  77  |   2 x      8192  |  raw seq  |      506.7 MBps      531.3 MBps  |         
+  78  |   2 x      8192  |  buf seq  |     1778.2 MBps     1864.6 MBps  |  +      
+  79  |   4 x      8192  |  raw      |      828.7 MBps      868.9 MBps  |         
+  80  |   4 x      8192  |  raw seq  |     1331.4 MBps     1396.0 MBps  |         
+  81  |   4 x      8192  |  buf seq  |     1774.2 MBps     1860.4 MBps  |         
+  82  |   8 x      8192  |  raw      |      650.0 MBps      681.6 MBps  |         
+  83  |   8 x      8192  |  raw seq  |     1155.4 MBps     1211.6 MBps  |         
+  84  |   8 x      8192  |  buf seq  |     1806.2 MBps     1893.9 MBps  |  +      
+  85  |  12 x      8192  |  raw      |     1372.4 MBps     1439.0 MBps  |         
+  86  |  12 x      8192  |  raw seq  |     1463.0 MBps     1534.0 MBps  |         
+  87  |  12 x      8192  |  buf seq  |     1739.1 MBps     1823.6 MBps  |         
+  88  |  16 x      8192  |  raw      |      698.5 MBps      732.5 MBps  |         
+  89  |  16 x      8192  |  raw seq  |     1475.0 MBps     1546.6 MBps  |         
+  90  |  16 x      8192  |  buf seq  |     1816.0 MBps     1904.2 MBps  |  +      
+  91  |  24 x      8192  |  raw      |      686.8 MBps      720.2 MBps  |         
+  92  |  24 x      8192  |  raw seq  |      752.7 MBps      789.3 MBps  |         
+  93  |  24 x      8192  |  buf seq  |     1813.3 MBps     1901.4 MBps  |         
+  94  |  32 x      8192  |  raw      |      786.1 MBps      824.2 MBps  |         
+  95  |  32 x      8192  |  raw seq  |      931.0 MBps      976.3 MBps  |         
+  96  |  32 x      8192  |  buf seq  |     1805.1 MBps     1892.8 MBps  |         
+  97  |   1 x     16384  |  raw      |     1131.2 MBps     1186.2 MBps  |         
+  98  |   1 x     16384  |  raw seq  |     1142.5 MBps     1198.0 MBps  |         
+  99  |   1 x     16384  |  buf seq  |     1774.4 MBps     1860.6 MBps  |         
+ 100  |   2 x     16384  |  raw      |      664.5 MBps      696.8 MBps  |         
+ 101  |   2 x     16384  |  raw seq  |      741.1 MBps      777.1 MBps  |         
+ 102  |   2 x     16384  |  buf seq  |     1749.6 MBps     1834.6 MBps  |         
+ 103  |   4 x     16384  |  raw      |     1270.8 MBps     1332.5 MBps  |         
+ 104  |   4 x     16384  |  raw seq  |     1956.7 MBps     2051.8 MBps  |  +      
+ 105  |   4 x     16384  |  buf seq  |     1765.1 MBps     1850.8 MBps  |         
+ 106  |   8 x     16384  |  raw      |     1259.3 MBps     1320.5 MBps  |         
+ 107  |   8 x     16384  |  raw seq  |     1789.2 MBps     1876.2 MBps  |         
+ 108  |   8 x     16384  |  buf seq  |     1753.4 MBps     1838.5 MBps  |         
+ 109  |  12 x     16384  |  raw      |     2076.8 MBps     2177.7 MBps  |  +      
+ 110  |  12 x     16384  |  raw seq  |     2668.1 MBps     2797.7 MBps  |  +      
+ 111  |  12 x     16384  |  buf seq  |     1744.7 MBps     1829.5 MBps  |         
+ 112  |  16 x     16384  |  raw      |     1186.6 MBps     1244.2 MBps  |         
+ 113  |  16 x     16384  |  raw seq  |     2548.3 MBps     2672.1 MBps  |         
+ 114  |  16 x     16384  |  buf seq  |     1750.4 MBps     1835.4 MBps  |         
+ 115  |  24 x     16384  |  raw      |     2823.9 MBps     2961.1 MBps  |  +      
+ 116  |  24 x     16384  |  raw seq  |     2768.0 MBps     2902.4 MBps  |         
+ 117  |  24 x     16384  |  buf seq  |     1750.4 MBps     1835.4 MBps  |         
+ 118  |  32 x     16384  |  raw      |     1759.6 MBps     1845.1 MBps  |         
+ 119  |  32 x     16384  |  raw seq  |     2770.5 MBps     2905.1 MBps  |         
+ 120  |  32 x     16384  |  buf seq  |     1729.3 MBps     1813.3 MBps  |         
+ 121  |   1 x     32768  |  raw      |     1994.2 MBps     2091.0 MBps  |         
+ 122  |   1 x     32768  |  raw seq  |     2003.0 MBps     2100.3 MBps  |         
+ 123  |   1 x     32768  |  buf seq  |     1840.1 MBps     1929.5 MBps  |         
+ 124  |   2 x     32768  |  raw      |     2561.4 MBps     2685.8 MBps  |         
+ 125  |   2 x     32768  |  raw seq  |     2690.9 MBps     2821.7 MBps  |         
+ 126  |   2 x     32768  |  buf seq  |     1839.9 MBps     1929.3 MBps  |         
+ 127  |   4 x     32768  |  raw      |     1675.1 MBps     1756.5 MBps  |         
+ 128  |   4 x     32768  |  raw seq  |     1998.1 MBps     2095.1 MBps  |         
+ 129  |   4 x     32768  |  buf seq  |     1839.4 MBps     1928.8 MBps  |         
+ 130  |   8 x     32768  |  raw      |     3023.6 MBps     3170.4 MBps  |  +      
+ 131  |   8 x     32768  |  raw seq  |     3389.8 MBps     3554.5 MBps  |  +      
+ 132  |   8 x     32768  |  buf seq  |     1840.0 MBps     1929.4 MBps  |         
+ 133  |  12 x     32768  |  raw      |     2249.3 MBps     2358.6 MBps  |         
+ 134  |  12 x     32768  |  raw seq  |     3514.6 MBps     3685.3 MBps  |  +      
+ 135  |  12 x     32768  |  buf seq  |     1847.7 MBps     1937.4 MBps  |         
+ 136  |  16 x     32768  |  raw      |     2112.7 MBps     2215.3 MBps  |         
+ 137  |  16 x     32768  |  raw seq  |     3065.9 MBps     3214.9 MBps  |         
+ 138  |  16 x     32768  |  buf seq  |     1830.3 MBps     1919.2 MBps  |         
+ 139  |  24 x     32768  |  raw      |     3719.5 MBps     3900.2 MBps  |  +      
+ 140  |  24 x     32768  |  raw seq  |     4670.8 MBps     4897.7 MBps  |  +      
+ 141  |  24 x     32768  |  buf seq  |     1825.6 MBps     1914.3 MBps  |         
+ 142  |  32 x     32768  |  raw      |     2374.9 MBps     2490.2 MBps  |         
+ 143  |  32 x     32768  |  raw seq  |     3252.6 MBps     3410.6 MBps  |         
+ 144  |  32 x     32768  |  buf seq  |     1791.8 MBps     1878.8 MBps  |         
+ 145  |   1 x     65536  |  raw      |     3344.1 MBps     3506.5 MBps  |         
+ 146  |   1 x     65536  |  raw seq  |     3447.7 MBps     3615.2 MBps  |         
+ 147  |   1 x     65536  |  buf seq  |     1963.8 MBps     2059.2 MBps  |         
+ 148  |   2 x     65536  |  raw      |     3893.2 MBps     4082.3 MBps  |         
+ 149  |   2 x     65536  |  raw seq  |     4102.1 MBps     4301.4 MBps  |         
+ 150  |   2 x     65536  |  buf seq  |     1979.6 MBps     2075.8 MBps  |         
+ 151  |   4 x     65536  |  raw      |     3660.3 MBps     3838.1 MBps  |         
+ 152  |   4 x     65536  |  raw seq  |     6482.8 MBps     6797.8 MBps  |  +      
+ 153  |   4 x     65536  |  buf seq  |     1959.2 MBps     2054.3 MBps  |         
+ 154  |   8 x     65536  |  raw      |     8112.4 MBps     8506.4 MBps  |  +      
+ 155  |   8 x     65536  |  raw seq  |     7941.7 MBps     8327.5 MBps  |         
+ 156  |   8 x     65536  |  buf seq  |     1951.6 MBps     2046.4 MBps  |         
+ 157  |  12 x     65536  |  raw      |     8327.6 MBps     8732.2 MBps  |  +      
+ 158  |  12 x     65536  |  raw seq  |     9086.0 MBps     9527.4 MBps  |  +      
+ 159  |  12 x     65536  |  buf seq  |     1938.8 MBps     2033.0 MBps  |         
+ 160  |  16 x     65536  |  raw      |     7871.7 MBps     8254.1 MBps  |         
+ 161  |  16 x     65536  |  raw seq  |     9359.7 MBps     9814.4 MBps  |  +      
+ 162  |  16 x     65536  |  buf seq  |     1942.3 MBps     2036.6 MBps  |         
+ 163  |  24 x     65536  |  raw      |     8325.2 MBps     8729.6 MBps  |         
+ 164  |  24 x     65536  |  raw seq  |     9611.9 MBps    10078.8 MBps  |  +      
+ 165  |  24 x     65536  |  buf seq  |     1874.7 MBps     1965.8 MBps  |         
+ 166  |  32 x     65536  |  raw      |     7322.9 MBps     7678.6 MBps  |         
+ 167  |  32 x     65536  |  raw seq  |     9706.2 MBps    10177.7 MBps  |  +      
+ 168  |  32 x     65536  |  buf seq  |     1838.7 MBps     1928.0 MBps  |         
+ 169  |   1 x    131072  |  raw      |     4213.8 MBps     4418.4 MBps  |         
+ 170  |   1 x    131072  |  raw seq  |     4385.8 MBps     4598.9 MBps  |         
+ 171  |   1 x    131072  |  buf seq  |     2259.4 MBps     2369.2 MBps  |         
+ 172  |   2 x    131072  |  raw      |     5699.4 MBps     5976.2 MBps  |         
+ 173  |   2 x    131072  |  raw seq  |     5693.2 MBps     5969.8 MBps  |         
+ 174  |   2 x    131072  |  buf seq  |     2276.7 MBps     2387.2 MBps  |         
+ 175  |   4 x    131072  |  raw      |     4448.8 MBps     4664.9 MBps  |         
+ 176  |   4 x    131072  |  raw seq  |     5503.5 MBps     5770.9 MBps  |         
+ 177  |   4 x    131072  |  buf seq  |     2252.0 MBps     2361.3 MBps  |         
+ 178  |   8 x    131072  |  raw      |     4749.0 MBps     4979.7 MBps  |         
+ 179  |   8 x    131072  |  raw seq  |     8156.6 MBps     8552.8 MBps  |         
+ 180  |   8 x    131072  |  buf seq  |     2194.0 MBps     2300.6 MBps  |         
+ 181  |  12 x    131072  |  raw      |     6294.7 MBps     6600.4 MBps  |         
+ 182  |  12 x    131072  |  raw seq  |     9311.7 MBps     9764.0 MBps  |         
+ 183  |  12 x    131072  |  buf seq  |     2138.6 MBps     2242.5 MBps  |         
+ 184  |  16 x    131072  |  raw      |     7513.0 MBps     7878.0 MBps  |         
+ 185  |  16 x    131072  |  raw seq  |     9816.6 MBps    10293.4 MBps  |  +      
+ 186  |  16 x    131072  |  buf seq  |     2066.0 MBps     2166.4 MBps  |         
+ 187  |  24 x    131072  |  raw      |     8137.6 MBps     8532.9 MBps  |         
+ 188  |  24 x    131072  |  raw seq  |    10533.8 MBps    11045.5 MBps  |  +      
+ 189  |  24 x    131072  |  buf seq  |     2009.1 MBps     2106.7 MBps  |         
+ 190  |  32 x    131072  |  raw      |     6349.7 MBps     6658.2 MBps  |         
+ 191  |  32 x    131072  |  raw seq  |     9319.4 MBps     9772.1 MBps  |         
+ 192  |  32 x    131072  |  buf seq  |     2028.8 MBps     2127.4 MBps  |         
+ 193  |   1 x    262144  |  raw      |     5970.8 MBps     6260.9 MBps  |         
+ 194  |   1 x    262144  |  raw seq  |     5958.7 MBps     6248.2 MBps  |         
+ 195  |   1 x    262144  |  buf seq  |     2707.7 MBps     2839.2 MBps  |         
+ 196  |   2 x    262144  |  raw      |     9502.6 MBps     9964.2 MBps  |         
+ 197  |   2 x    262144  |  raw seq  |     9619.5 MBps    10086.7 MBps  |         
+ 198  |   2 x    262144  |  buf seq  |     2637.7 MBps     2765.9 MBps  |         
+ 199  |   4 x    262144  |  raw      |    11128.3 MBps    11668.9 MBps  |  +      
+ 200  |   4 x    262144  |  raw seq  |    11708.6 MBps    12277.3 MBps  |  +      
+ 201  |   4 x    262144  |  buf seq  |     2549.3 MBps     2673.1 MBps  |         
+ 202  |   8 x    262144  |  raw      |    10740.4 MBps    11262.2 MBps  |         
+ 203  |   8 x    262144  |  raw seq  |    11410.9 MBps    11965.2 MBps  |         
+ 204  |   8 x    262144  |  buf seq  |     2410.3 MBps     2527.4 MBps  |         
+ 205  |  12 x    262144  |  raw      |     8959.4 MBps     9394.6 MBps  |         
+ 206  |  12 x    262144  |  raw seq  |    10714.6 MBps    11235.0 MBps  |         
+ 207  |  12 x    262144  |  buf seq  |     2325.9 MBps     2438.9 MBps  |         
+ 208  |  16 x    262144  |  raw      |     8027.0 MBps     8416.9 MBps  |         
+ 209  |  16 x    262144  |  raw seq  |     9475.9 MBps     9936.2 MBps  |         
+ 210  |  16 x    262144  |  buf seq  |     2170.1 MBps     2275.5 MBps  |         
+ 211  |  24 x    262144  |  raw      |     6987.0 MBps     7326.4 MBps  |         
+ 212  |  24 x    262144  |  raw seq  |     8074.5 MBps     8466.8 MBps  |         
+ 213  |  24 x    262144  |  buf seq  |     2245.6 MBps     2354.7 MBps  |         
+ 214  |  32 x    262144  |  raw      |     6901.8 MBps     7237.1 MBps  |         
+ 215  |  32 x    262144  |  raw seq  |     7996.2 MBps     8384.6 MBps  |         
+ 216  |  32 x    262144  |  buf seq  |     2144.1 MBps     2248.3 MBps  |         
+ 217  |   1 x    524288  |  raw      |     7875.1 MBps     8257.6 MBps  |         
+ 218  |   1 x    524288  |  raw seq  |     7964.5 MBps     8351.3 MBps  |         
+ 219  |   1 x    524288  |  buf seq  |     2565.6 MBps     2690.2 MBps  |         
+ 220  |   2 x    524288  |  raw      |     9149.8 MBps     9594.3 MBps  |         
+ 221  |   2 x    524288  |  raw seq  |     9221.6 MBps     9669.5 MBps  |         
+ 222  |   2 x    524288  |  buf seq  |     2637.2 MBps     2765.3 MBps  |         
+ 223  |   4 x    524288  |  raw      |    13856.8 MBps    14529.9 MBps  |  + *    
+ 224  |   4 x    524288  |  raw seq  |    14292.3 MBps    14986.5 MBps  |  + * *  
+ 225  |   4 x    524288  |  buf seq  |     2498.7 MBps     2620.1 MBps  |         
+ 226  |   8 x    524288  |  raw      |    10226.2 MBps    10722.9 MBps  |         
+ 227  |   8 x    524288  |  raw seq  |    11368.7 MBps    11920.9 MBps  |         
+ 228  |   8 x    524288  |  buf seq  |     2372.4 MBps     2487.6 MBps  |         
+ 229  |  12 x    524288  |  raw      |     7280.2 MBps     7633.9 MBps  |         
+ 230  |  12 x    524288  |  raw seq  |     7984.8 MBps     8372.6 MBps  |         
+ 231  |  12 x    524288  |  buf seq  |     2300.6 MBps     2412.4 MBps  |         
+ 232  |  16 x    524288  |  raw      |     7768.5 MBps     8145.9 MBps  |         
+ 233  |  16 x    524288  |  raw seq  |     8148.2 MBps     8544.0 MBps  |         
+ 234  |  16 x    524288  |  buf seq  |     2324.3 MBps     2437.2 MBps  |         
+ 235  |  24 x    524288  |  raw      |     6952.3 MBps     7290.0 MBps  |         
+ 236  |  24 x    524288  |  raw seq  |     6935.0 MBps     7271.9 MBps  |         
+ 237  |  24 x    524288  |  buf seq  |     2293.5 MBps     2404.9 MBps  |         
+ 238  |  32 x    524288  |  raw      |     6780.9 MBps     7110.2 MBps  |         
+ 239  |  32 x    524288  |  raw seq  |     6920.6 MBps     7256.7 MBps  |         
+ 240  |  32 x    524288  |  buf seq  |     2403.6 MBps     2520.4 MBps  |         
+ 241  |   1 x   1048576  |  raw      |     8296.6 MBps     8699.6 MBps  |         
+ 242  |   1 x   1048576  |  raw seq  |     8330.7 MBps     8735.4 MBps  |         
+ 243  |   1 x   1048576  |  buf seq  |     2550.3 MBps     2674.1 MBps  |         
+ 244  |   2 x   1048576  |  raw      |    11871.5 MBps    12448.2 MBps  |         
+ 245  |   2 x   1048576  |  raw seq  |    11780.4 MBps    12352.6 MBps  |         
+ 246  |   2 x   1048576  |  buf seq  |     2462.7 MBps     2582.3 MBps  |         
+ 247  |   4 x   1048576  |  raw      |    12285.8 MBps    12882.5 MBps  |         
+ 248  |   4 x   1048576  |  raw seq  |    11435.7 MBps    11991.2 MBps  |         
+ 249  |   4 x   1048576  |  buf seq  |     2346.2 MBps     2460.2 MBps  |         
+ 250  |   8 x   1048576  |  raw      |     7286.4 MBps     7640.4 MBps  |         
+ 251  |   8 x   1048576  |  raw seq  |     7786.4 MBps     8164.7 MBps  |         
+ 252  |   8 x   1048576  |  buf seq  |     2376.4 MBps     2491.8 MBps  |         
+ 253  |  12 x   1048576  |  raw      |     7072.2 MBps     7415.7 MBps  |         
+ 254  |  12 x   1048576  |  raw seq  |     6985.2 MBps     7324.5 MBps  |         
+ 255  |  12 x   1048576  |  buf seq  |     2364.7 MBps     2479.5 MBps  |         
+ 256  |  16 x   1048576  |  raw      |     6217.4 MBps     6519.4 MBps  |         
+ 257  |  16 x   1048576  |  raw seq  |     6227.2 MBps     6529.7 MBps  |         
+ 258  |  16 x   1048576  |  buf seq  |     2334.4 MBps     2447.7 MBps  |         
+ 259  |  24 x   1048576  |  raw      |     6128.7 MBps     6426.4 MBps  |         
+ 260  |  24 x   1048576  |  raw seq  |     6172.6 MBps     6472.4 MBps  |         
+ 261  |  24 x   1048576  |  buf seq  |     2377.8 MBps     2493.3 MBps  |         
+ 262  |  32 x   1048576  |  raw      |     6125.9 MBps     6423.5 MBps  |         
+ 263  |  32 x   1048576  |  raw seq  |     6179.1 MBps     6479.3 MBps  |         
+ 264  |  32 x   1048576  |  buf seq  |     2377.8 MBps     2493.3 MBps  |         
+ 265  |   1 x   2097152  |  raw      |     9090.7 MBps     9532.3 MBps  |         
+ 266  |   1 x   2097152  |  raw seq  |     9116.7 MBps     9559.6 MBps  |         
+ 267  |   1 x   2097152  |  buf seq  |     2622.6 MBps     2749.9 MBps  |         
+ 268  |   2 x   2097152  |  raw      |     8946.6 MBps     9381.1 MBps  |         
+ 269  |   2 x   2097152  |  raw seq  |     8857.2 MBps     9287.4 MBps  |         
+ 270  |   2 x   2097152  |  buf seq  |     2508.7 MBps     2630.6 MBps  |         
+ 271  |   4 x   2097152  |  raw      |     6836.7 MBps     7168.8 MBps  |         
+ 272  |   4 x   2097152  |  raw seq  |     7541.8 MBps     7908.1 MBps  |         
+ 273  |   4 x   2097152  |  buf seq  |     2480.7 MBps     2601.2 MBps  |         
+ 274  |   8 x   2097152  |  raw      |     6429.7 MBps     6742.0 MBps  |         
+ 275  |   8 x   2097152  |  raw seq  |     6974.8 MBps     7313.6 MBps  |         
+ 276  |   8 x   2097152  |  buf seq  |     2464.4 MBps     2584.1 MBps  |         
+ 277  |  12 x   2097152  |  raw      |     6687.1 MBps     7011.9 MBps  |         
+ 278  |  12 x   2097152  |  raw seq  |     6811.6 MBps     7142.5 MBps  |         
+ 279  |  12 x   2097152  |  buf seq  |     2492.9 MBps     2614.0 MBps  |         
+ 280  |  16 x   2097152  |  raw      |     6752.5 MBps     7080.5 MBps  |         
+ 281  |  16 x   2097152  |  raw seq  |     6467.1 MBps     6781.2 MBps  |         
+ 282  |  16 x   2097152  |  buf seq  |     2472.3 MBps     2592.4 MBps  |         
+ 283  |  24 x   2097152  |  raw      |     6234.7 MBps     6537.6 MBps  |         
+ 284  |  24 x   2097152  |  raw seq  |     6194.7 MBps     6495.7 MBps  |         
+ 285  |  24 x   2097152  |  buf seq  |     2471.6 MBps     2591.6 MBps  |         
+ 286  |  32 x   2097152  |  raw      |     6146.7 MBps     6445.3 MBps  |         
+ 287  |  32 x   2097152  |  raw seq  |     6197.6 MBps     6498.7 MBps  |         
+ 288  |  32 x   2097152  |  buf seq  |     2439.1 MBps     2557.6 MBps  |         
+ 289  |   1 x   4194304  |  raw      |     7469.3 MBps     7832.1 MBps  |         
+ 290  |   1 x   4194304  |  raw seq  |     7434.8 MBps     7795.9 MBps  |         
+ 291  |   1 x   4194304  |  buf seq  |     2528.1 MBps     2650.9 MBps  |         
+ 292  |   2 x   4194304  |  raw      |     6930.8 MBps     7267.4 MBps  |         
+ 293  |   2 x   4194304  |  raw seq  |     6785.3 MBps     7114.9 MBps  |         
+ 294  |   2 x   4194304  |  buf seq  |     2513.6 MBps     2635.7 MBps  |         
+ 295  |   4 x   4194304  |  raw      |     6344.7 MBps     6653.0 MBps  |         
+ 296  |   4 x   4194304  |  raw seq  |     7423.4 MBps     7784.0 MBps  |         
+ 297  |   4 x   4194304  |  buf seq  |     2450.7 MBps     2569.8 MBps  |         
+ 298  |   8 x   4194304  |  raw      |     6378.9 MBps     6688.8 MBps  |         
+ 299  |   8 x   4194304  |  raw seq  |     6699.0 MBps     7024.4 MBps  |         
+ 300  |   8 x   4194304  |  buf seq  |     2514.9 MBps     2637.0 MBps  |         
+ 301  |  12 x   4194304  |  raw      |     6842.7 MBps     7175.1 MBps  |         
+ 302  |  12 x   4194304  |  raw seq  |     6883.9 MBps     7218.3 MBps  |         
+ 303  |  12 x   4194304  |  buf seq  |     2516.7 MBps     2639.0 MBps  |         
+ 304  |  16 x   4194304  |  raw      |     6446.4 MBps     6759.5 MBps  |         
+ 305  |  16 x   4194304  |  raw seq  |     7148.8 MBps     7496.1 MBps  |         
+ 306  |  16 x   4194304  |  buf seq  |     2516.9 MBps     2639.1 MBps  |         
+ 307  |  24 x   4194304  |  raw      |     6214.5 MBps     6516.4 MBps  |         
+ 308  |  24 x   4194304  |  raw seq  |     6204.9 MBps     6506.3 MBps  |         
+ 309  |  24 x   4194304  |  buf seq  |     2504.4 MBps     2626.0 MBps  |         
+ 310  |  32 x   4194304  |  raw      |     6191.2 MBps     6492.0 MBps  |         
+ 311  |  32 x   4194304  |  raw seq  |     6176.0 MBps     6476.0 MBps  |         
+ 312  |  32 x   4194304  |  buf seq  |     2527.6 MBps     2650.4 MBps  |         
+ 313  |   1 x   8388608  |  raw      |     6232.6 MBps     6535.4 MBps  |         
+ 314  |   1 x   8388608  |  raw seq  |     6210.7 MBps     6512.3 MBps  |         
+ 315  |   1 x   8388608  |  buf seq  |     2360.2 MBps     2474.9 MBps  |         
+ 316  |   2 x   8388608  |  raw      |     6283.3 MBps     6588.5 MBps  |         
+ 317  |   2 x   8388608  |  raw seq  |     6231.8 MBps     6534.5 MBps  |         
+ 318  |   2 x   8388608  |  buf seq  |     2348.0 MBps     2462.1 MBps  |         
+ 319  |   4 x   8388608  |  raw      |     6306.5 MBps     6612.9 MBps  |         
+ 320  |   4 x   8388608  |  raw seq  |     6813.5 MBps     7144.5 MBps  |         
+ 321  |   4 x   8388608  |  buf seq  |     2370.3 MBps     2485.4 MBps  |         
+ 322  |   8 x   8388608  |  raw      |     6588.9 MBps     6908.9 MBps  |         
+ 323  |   8 x   8388608  |  raw seq  |     7179.3 MBps     7528.0 MBps  |         
+ 324  |   8 x   8388608  |  buf seq  |     2390.2 MBps     2506.3 MBps  |         
+ 325  |  12 x   8388608  |  raw      |     6225.4 MBps     6527.8 MBps  |         
+ 326  |  12 x   8388608  |  raw seq  |     6124.1 MBps     6421.5 MBps  |         
+ 327  |  12 x   8388608  |  buf seq  |     2421.1 MBps     2538.7 MBps  |         
+ 328  |  16 x   8388608  |  raw      |     6211.5 MBps     6513.3 MBps  |         
+ 329  |  16 x   8388608  |  raw seq  |     6230.6 MBps     6533.3 MBps  |         
+ 330  |  16 x   8388608  |  buf seq  |     2391.9 MBps     2508.1 MBps  |         
+ 331  |  24 x   8388608  |  raw      |     6206.3 MBps     6507.8 MBps  |         
+ 332  |  24 x   8388608  |  raw seq  |     6836.4 MBps     7168.5 MBps  |         
+ 333  |  24 x   8388608  |  buf seq  |     2436.0 MBps     2554.3 MBps  |         
+ 334  |  32 x   8388608  |  raw      |     6625.1 MBps     6946.9 MBps  |         
+ 335  |  32 x   8388608  |  raw seq  |     6953.8 MBps     7291.6 MBps  |         
+ 336  |  32 x   8388608  |  buf seq  |     2451.5 MBps     2570.6 MBps  |         
+ 337  |   1 x  16777216  |  raw      |     5788.2 MBps     6069.4 MBps  |         
+ 338  |   1 x  16777216  |  raw seq  |     5818.9 MBps     6101.6 MBps  |         
+ 339  |   1 x  16777216  |  buf seq  |     1364.4 MBps     1430.7 MBps  |         
+ 340  |   2 x  16777216  |  raw      |     6320.1 MBps     6627.2 MBps  |         
+ 341  |   2 x  16777216  |  raw seq  |     6314.8 MBps     6621.5 MBps  |         
+ 342  |   2 x  16777216  |  buf seq  |     1935.0 MBps     2029.0 MBps  |         
+ 343  |   4 x  16777216  |  raw      |     6337.2 MBps     6645.0 MBps  |         
+ 344  |   4 x  16777216  |  raw seq  |     6315.8 MBps     6622.6 MBps  |         
+ 345  |   4 x  16777216  |  buf seq  |     2322.0 MBps     2434.8 MBps  |         
+ 346  |   8 x  16777216  |  raw      |     6234.6 MBps     6537.5 MBps  |         
+ 347  |   8 x  16777216  |  raw seq  |     6265.9 MBps     6570.3 MBps  |         
+ 348  |   8 x  16777216  |  buf seq  |     2326.5 MBps     2439.5 MBps  |         
+ 349  |  12 x  16777216  |  raw      |     6263.8 MBps     6568.1 MBps  |         
+ 350  |  12 x  16777216  |  raw seq  |     6782.0 MBps     7111.4 MBps  |         
+ 351  |  12 x  16777216  |  buf seq  |     2379.0 MBps     2494.5 MBps  |         
+ 352  |  16 x  16777216  |  raw      |     6694.1 MBps     7019.3 MBps  |         
+ 353  |  16 x  16777216  |  raw seq  |     6864.5 MBps     7197.9 MBps  |         
+ 354  |  16 x  16777216  |  buf seq  |     2304.2 MBps     2416.2 MBps  |         
+ 355  |   1 x  33554432  |  raw      |     5604.5 MBps     5876.8 MBps  |         
+ 356  |   1 x  33554432  |  raw seq  |     5674.3 MBps     5949.9 MBps  |         
+ 357  |   1 x  33554432  |  buf seq  |     1502.1 MBps     1575.0 MBps  |         
+ 358  |   2 x  33554432  |  raw      |     6305.5 MBps     6611.8 MBps  |         
+ 359  |   2 x  33554432  |  raw seq  |     6213.8 MBps     6515.7 MBps  |         
+ 360  |   2 x  33554432  |  buf seq  |     2264.1 MBps     2374.1 MBps  |         
+ 361  |   4 x  33554432  |  raw      |     6262.3 MBps     6566.5 MBps  |         
+ 362  |   4 x  33554432  |  raw seq  |     6372.9 MBps     6682.5 MBps  |         
+ 363  |   4 x  33554432  |  buf seq  |     2445.9 MBps     2564.7 MBps  |         
+ 364  |   8 x  33554432  |  raw      |     6299.8 MBps     6605.8 MBps  |         
+ 365  |   8 x  33554432  |  raw seq  |     6548.0 MBps     6866.1 MBps  |         
+ 366  |   8 x  33554432  |  buf seq  |     2390.0 MBps     2506.1 MBps  |         
+ 367  |   1 x  67108864  |  raw      |     5467.4 MBps     5733.0 MBps  |         
+ 368  |   1 x  67108864  |  raw seq  |     5500.2 MBps     5767.4 MBps  |         
+ 369  |   1 x  67108864  |  buf seq  |     1573.9 MBps     1650.3 MBps  |         
+ 370  |   2 x  67108864  |  raw      |     6343.7 MBps     6651.8 MBps  |         
+ 371  |   2 x  67108864  |  raw seq  |     6245.3 MBps     6548.6 MBps  |         
+ 372  |   2 x  67108864  |  buf seq  |     2239.0 MBps     2347.8 MBps  |         
+ 373  |   4 x  67108864  |  raw      |     6366.0 MBps     6675.2 MBps  |         
+ 374  |   4 x  67108864  |  raw seq  |     6428.6 MBps     6740.9 MBps  |         
+ 375  |   4 x  67108864  |  buf seq  |     2471.1 MBps     2591.1 MBps  |         
+                                
+--- Write measurements ---      
+                                
+   1  |   1 x      1024  |  raw      |       77.8 MBps       81.6 MBps  |  +      
+   2  |   1 x      1024  |  raw seq  |       80.8 MBps       84.7 MBps  |  +      
+   3  |   2 x      1024  |  raw      |      130.5 MBps      136.9 MBps  |  +      
+   4  |   2 x      1024  |  raw seq  |      129.1 MBps      135.4 MBps  |         
+   5  |   4 x      1024  |  raw      |      153.6 MBps      161.1 MBps  |  +      
+   6  |   4 x      1024  |  raw seq  |      154.7 MBps      162.2 MBps  |  +      
+   7  |   8 x      1024  |  raw      |      163.2 MBps      171.1 MBps  |  +      
+   8  |   8 x      1024  |  raw seq  |      163.4 MBps      171.3 MBps  |  +      
+   9  |  12 x      1024  |  raw      |      166.5 MBps      174.5 MBps  |  +      
+  10  |  12 x      1024  |  raw seq  |      164.5 MBps      172.5 MBps  |         
+  11  |  16 x      1024  |  raw      |      155.7 MBps      163.3 MBps  |         
+  12  |  16 x      1024  |  raw seq  |      153.7 MBps      161.1 MBps  |         
+  13  |  24 x      1024  |  raw      |      157.9 MBps      165.6 MBps  |         
+  14  |  24 x      1024  |  raw seq  |      155.9 MBps      163.4 MBps  |         
+  15  |  32 x      1024  |  raw      |      125.0 MBps      131.1 MBps  |         
+  16  |  32 x      1024  |  raw seq  |      125.2 MBps      131.3 MBps  |         
+  17  |   1 x      2048  |  raw      |      158.6 MBps      166.4 MBps  |         
+  18  |   1 x      2048  |  raw seq  |      157.4 MBps      165.0 MBps  |         
+  19  |   2 x      2048  |  raw      |      260.6 MBps      273.3 MBps  |  +      
+  20  |   2 x      2048  |  raw seq  |      276.9 MBps      290.4 MBps  |  +      
+  21  |   4 x      2048  |  raw      |      304.1 MBps      318.9 MBps  |  +      
+  22  |   4 x      2048  |  raw seq  |      314.4 MBps      329.6 MBps  |  +      
+  23  |   8 x      2048  |  raw      |      324.2 MBps      339.9 MBps  |  +      
+  24  |   8 x      2048  |  raw seq  |      322.0 MBps      337.7 MBps  |         
+  25  |  12 x      2048  |  raw      |      330.2 MBps      346.3 MBps  |  +      
+  26  |  12 x      2048  |  raw seq  |      332.1 MBps      348.2 MBps  |  +      
+  27  |  16 x      2048  |  raw      |      326.1 MBps      341.9 MBps  |         
+  28  |  16 x      2048  |  raw seq  |      319.6 MBps      335.1 MBps  |         
+  29  |  24 x      2048  |  raw      |      310.8 MBps      325.9 MBps  |         
+  30  |  24 x      2048  |  raw seq  |      312.0 MBps      327.2 MBps  |         
+  31  |  32 x      2048  |  raw      |      216.1 MBps      226.6 MBps  |         
+  32  |  32 x      2048  |  raw seq  |      232.1 MBps      243.4 MBps  |         
+  33  |   1 x      4096  |  raw      |      309.4 MBps      324.4 MBps  |         
+  34  |   1 x      4096  |  raw seq  |      304.4 MBps      319.2 MBps  |         
+  35  |   2 x      4096  |  raw      |      494.7 MBps      518.7 MBps  |  +      
+  36  |   2 x      4096  |  raw seq  |      460.9 MBps      483.3 MBps  |         
+  37  |   4 x      4096  |  raw      |      639.0 MBps      670.0 MBps  |  +      
+  38  |   4 x      4096  |  raw seq  |      617.8 MBps      647.9 MBps  |         
+  39  |   8 x      4096  |  raw      |      654.6 MBps      686.4 MBps  |  +      
+  40  |   8 x      4096  |  raw seq  |      646.0 MBps      677.4 MBps  |         
+  41  |  12 x      4096  |  raw      |      657.5 MBps      689.5 MBps  |  +      
+  42  |  12 x      4096  |  raw seq  |      664.4 MBps      696.7 MBps  |  +      
+  43  |  16 x      4096  |  raw      |      668.1 MBps      700.5 MBps  |  +      
+  44  |  16 x      4096  |  raw seq  |      670.3 MBps      702.9 MBps  |  +      
+  45  |  24 x      4096  |  raw      |      641.2 MBps      672.4 MBps  |         
+  46  |  24 x      4096  |  raw seq  |      641.5 MBps      672.7 MBps  |         
+  47  |  32 x      4096  |  raw      |      480.5 MBps      503.8 MBps  |         
+  48  |  32 x      4096  |  raw seq  |      474.5 MBps      497.5 MBps  |         
+  49  |   1 x      8192  |  raw      |      576.9 MBps      604.9 MBps  |         
+  50  |   1 x      8192  |  raw seq  |      576.1 MBps      604.1 MBps  |         
+  51  |   2 x      8192  |  raw      |      447.3 MBps      469.0 MBps  |         
+  52  |   2 x      8192  |  raw seq  |      474.6 MBps      497.6 MBps  |         
+  53  |   4 x      8192  |  raw      |     1121.1 MBps     1175.6 MBps  |  +      
+  54  |   4 x      8192  |  raw seq  |     1149.3 MBps     1205.1 MBps  |  +      
+  55  |   8 x      8192  |  raw      |     1288.2 MBps     1350.8 MBps  |  +      
+  56  |   8 x      8192  |  raw seq  |     1243.6 MBps     1304.0 MBps  |         
+  57  |  12 x      8192  |  raw      |     1325.3 MBps     1389.7 MBps  |  +      
+  58  |  12 x      8192  |  raw seq  |     1336.6 MBps     1401.5 MBps  |  +      
+  59  |  16 x      8192  |  raw      |     1350.8 MBps     1416.4 MBps  |  +      
+  60  |  16 x      8192  |  raw seq  |     1360.9 MBps     1427.0 MBps  |  +      
+  61  |  24 x      8192  |  raw      |     1321.0 MBps     1385.2 MBps  |         
+  62  |  24 x      8192  |  raw seq  |     1307.2 MBps     1370.7 MBps  |         
+  63  |  32 x      8192  |  raw      |     1302.6 MBps     1365.9 MBps  |         
+  64  |  32 x      8192  |  raw seq  |     1293.3 MBps     1356.1 MBps  |         
+  65  |   1 x     16384  |  raw      |     1071.7 MBps     1123.7 MBps  |         
+  66  |   1 x     16384  |  raw seq  |     1076.3 MBps     1128.6 MBps  |         
+  67  |   2 x     16384  |  raw      |     1127.4 MBps     1182.2 MBps  |         
+  68  |   2 x     16384  |  raw seq  |     1061.6 MBps     1113.2 MBps  |         
+  69  |   4 x     16384  |  raw      |     1716.3 MBps     1799.6 MBps  |  +      
+  70  |   4 x     16384  |  raw seq  |     1686.9 MBps     1768.9 MBps  |         
+  71  |   8 x     16384  |  raw      |     2067.7 MBps     2168.1 MBps  |  +      
+  72  |   8 x     16384  |  raw seq  |     2040.9 MBps     2140.1 MBps  |         
+  73  |  12 x     16384  |  raw      |     2242.7 MBps     2351.7 MBps  |  +      
+  74  |  12 x     16384  |  raw seq  |     2218.1 MBps     2325.8 MBps  |         
+  75  |  16 x     16384  |  raw      |     2358.1 MBps     2472.6 MBps  |  +      
+  76  |  16 x     16384  |  raw seq  |     2403.8 MBps     2520.6 MBps  |  +      
+  77  |  24 x     16384  |  raw      |     2464.3 MBps     2584.0 MBps  |  +      
+  78  |  24 x     16384  |  raw seq  |     2467.8 MBps     2587.7 MBps  |  +      
+  79  |  32 x     16384  |  raw      |     2544.6 MBps     2668.2 MBps  |  +      
+  80  |  32 x     16384  |  raw seq  |     2498.5 MBps     2619.9 MBps  |         
+  81  |   1 x     32768  |  raw      |     1874.3 MBps     1965.4 MBps  |         
+  82  |   1 x     32768  |  raw seq  |     1900.1 MBps     1992.4 MBps  |         
+  83  |   2 x     32768  |  raw      |     2618.0 MBps     2745.2 MBps  |  +      
+  84  |   2 x     32768  |  raw seq  |     2569.5 MBps     2694.3 MBps  |         
+  85  |   4 x     32768  |  raw      |     2869.2 MBps     3008.6 MBps  |  +      
+  86  |   4 x     32768  |  raw seq  |     2893.0 MBps     3033.5 MBps  |  +      
+  87  |   8 x     32768  |  raw      |     2875.9 MBps     3015.6 MBps  |         
+  88  |   8 x     32768  |  raw seq  |     3266.9 MBps     3425.6 MBps  |  +      
+  89  |  12 x     32768  |  raw      |     2670.9 MBps     2800.7 MBps  |         
+  90  |  12 x     32768  |  raw seq  |     2515.3 MBps     2637.5 MBps  |         
+  91  |  16 x     32768  |  raw      |     3292.9 MBps     3452.9 MBps  |  +      
+  92  |  16 x     32768  |  raw seq  |     3333.7 MBps     3495.6 MBps  |  +      
+  93  |  24 x     32768  |  raw      |     4228.7 MBps     4434.1 MBps  |  +      
+  94  |  24 x     32768  |  raw seq  |     4151.5 MBps     4353.2 MBps  |         
+  95  |  32 x     32768  |  raw      |     4554.8 MBps     4776.0 MBps  |  +      
+  96  |  32 x     32768  |  raw seq  |     4614.2 MBps     4838.4 MBps  |  +      
+  97  |   1 x     65536  |  raw      |     2997.4 MBps     3143.0 MBps  |         
+  98  |   1 x     65536  |  raw seq  |     2950.9 MBps     3094.2 MBps  |         
+  99  |   2 x     65536  |  raw      |     4341.0 MBps     4551.8 MBps  |         
+ 100  |   2 x     65536  |  raw seq  |     4334.7 MBps     4545.3 MBps  |         
+ 101  |   4 x     65536  |  raw      |     4171.3 MBps     4373.9 MBps  |         
+ 102  |   4 x     65536  |  raw seq  |     4116.4 MBps     4316.3 MBps  |         
+ 103  |   8 x     65536  |  raw      |     5631.0 MBps     5904.6 MBps  |  +      
+ 104  |   8 x     65536  |  raw seq  |     5405.3 MBps     5667.9 MBps  |         
+ 105  |  12 x     65536  |  raw      |     6842.0 MBps     7174.3 MBps  |  +      
+ 106  |  12 x     65536  |  raw seq  |     6983.0 MBps     7322.2 MBps  |  +      
+ 107  |  16 x     65536  |  raw      |     6892.8 MBps     7227.6 MBps  |         
+ 108  |  16 x     65536  |  raw seq  |     7130.7 MBps     7477.1 MBps  |  +      
+ 109  |  24 x     65536  |  raw      |     7043.1 MBps     7385.2 MBps  |         
+ 110  |  24 x     65536  |  raw seq  |     7373.5 MBps     7731.6 MBps  |  +      
+ 111  |  32 x     65536  |  raw      |     7727.4 MBps     8102.8 MBps  |  +      
+ 112  |  32 x     65536  |  raw seq  |     7520.4 MBps     7885.7 MBps  |         
+ 113  |   1 x    131072  |  raw      |     3702.3 MBps     3882.1 MBps  |         
+ 114  |   1 x    131072  |  raw seq  |     3653.7 MBps     3831.2 MBps  |         
+ 115  |   2 x    131072  |  raw      |     6125.9 MBps     6423.5 MBps  |         
+ 116  |   2 x    131072  |  raw seq  |     5728.7 MBps     6007.0 MBps  |         
+ 117  |   4 x    131072  |  raw      |     7193.3 MBps     7542.7 MBps  |         
+ 118  |   4 x    131072  |  raw seq  |     7804.3 MBps     8183.4 MBps  |  +      
+ 119  |   8 x    131072  |  raw      |     7290.1 MBps     7644.2 MBps  |         
+ 120  |   8 x    131072  |  raw seq  |     7604.5 MBps     7973.8 MBps  |         
+ 121  |  12 x    131072  |  raw      |     7622.5 MBps     7992.7 MBps  |         
+ 122  |  12 x    131072  |  raw seq  |     7706.8 MBps     8081.2 MBps  |         
+ 123  |  16 x    131072  |  raw      |     8048.5 MBps     8439.4 MBps  |  +      
+ 124  |  16 x    131072  |  raw seq  |     8087.6 MBps     8480.5 MBps  |  +      
+ 125  |  24 x    131072  |  raw      |     7472.8 MBps     7835.8 MBps  |         
+ 126  |  24 x    131072  |  raw seq  |     7337.7 MBps     7694.2 MBps  |         
+ 127  |  32 x    131072  |  raw      |     6994.0 MBps     7333.7 MBps  |         
+ 128  |  32 x    131072  |  raw seq  |     7340.6 MBps     7697.2 MBps  |         
+ 129  |   1 x    262144  |  raw      |     5057.6 MBps     5303.3 MBps  |         
+ 130  |   1 x    262144  |  raw seq  |     5079.8 MBps     5326.5 MBps  |         
+ 131  |   2 x    262144  |  raw      |     6406.2 MBps     6717.4 MBps  |         
+ 132  |   2 x    262144  |  raw seq  |     6640.5 MBps     6963.0 MBps  |         
+ 133  |   4 x    262144  |  raw      |    10290.8 MBps    10790.7 MBps  |  + * *  
+ 134  |   4 x    262144  |  raw seq  |     9522.2 MBps     9984.8 MBps  |         
+ 135  |   8 x    262144  |  raw      |     9119.9 MBps     9562.9 MBps  |         
+ 136  |   8 x    262144  |  raw seq  |     9594.2 MBps    10060.2 MBps  |         
+ 137  |  12 x    262144  |  raw      |     8658.0 MBps     9078.5 MBps  |         
+ 138  |  12 x    262144  |  raw seq  |     8969.1 MBps     9404.8 MBps  |         
+ 139  |  16 x    262144  |  raw      |     8871.2 MBps     9302.1 MBps  |         
+ 140  |  16 x    262144  |  raw seq  |     8404.6 MBps     8812.9 MBps  |         
+ 141  |  24 x    262144  |  raw      |     7247.4 MBps     7599.4 MBps  |         
+ 142  |  24 x    262144  |  raw seq  |     7533.2 MBps     7899.1 MBps  |         
+ 143  |  32 x    262144  |  raw      |     7004.0 MBps     7344.3 MBps  |         
+ 144  |  32 x    262144  |  raw seq  |     7450.3 MBps     7812.2 MBps  |         
+ 145  |   1 x    524288  |  raw      |     5826.8 MBps     6109.8 MBps  |         
+ 146  |   1 x    524288  |  raw seq  |     5789.5 MBps     6070.8 MBps  |         
+ 147  |   2 x    524288  |  raw      |     7064.6 MBps     7407.8 MBps  |         
+ 148  |   2 x    524288  |  raw seq  |     7123.9 MBps     7469.9 MBps  |         
+ 149  |   4 x    524288  |  raw      |     9714.7 MBps    10186.6 MBps  |         
+ 150  |   4 x    524288  |  raw seq  |     9692.8 MBps    10163.6 MBps  |         
+ 151  |   8 x    524288  |  raw      |     9693.9 MBps    10164.8 MBps  |         
+ 152  |   8 x    524288  |  raw seq  |     8638.4 MBps     9058.0 MBps  |         
+ 153  |  12 x    524288  |  raw      |     7565.9 MBps     7933.5 MBps  |         
+ 154  |  12 x    524288  |  raw seq  |     7654.4 MBps     8026.2 MBps  |         
+ 155  |  16 x    524288  |  raw      |     7095.7 MBps     7440.4 MBps  |         
+ 156  |  16 x    524288  |  raw seq  |     7205.2 MBps     7555.2 MBps  |         
+ 157  |  24 x    524288  |  raw      |     6961.7 MBps     7299.9 MBps  |         
+ 158  |  24 x    524288  |  raw seq  |     6709.6 MBps     7035.5 MBps  |         
+ 159  |  32 x    524288  |  raw      |     6769.7 MBps     7098.5 MBps  |         
+ 160  |  32 x    524288  |  raw seq  |     6849.3 MBps     7182.0 MBps  |         
+ 161  |   1 x   1048576  |  raw      |     6672.6 MBps     6996.7 MBps  |         
+ 162  |   1 x   1048576  |  raw seq  |     6675.9 MBps     7000.2 MBps  |         
+ 163  |   2 x   1048576  |  raw      |     7879.4 MBps     8262.2 MBps  |         
+ 164  |   2 x   1048576  |  raw seq  |     7803.3 MBps     8182.4 MBps  |         
+ 165  |   4 x   1048576  |  raw      |     8515.2 MBps     8928.8 MBps  |         
+ 166  |   4 x   1048576  |  raw seq  |     8969.2 MBps     9404.9 MBps  |         
+ 167  |   8 x   1048576  |  raw      |     7100.5 MBps     7445.4 MBps  |         
+ 168  |   8 x   1048576  |  raw seq  |     8531.4 MBps     8945.9 MBps  |         
+ 169  |  12 x   1048576  |  raw      |     6980.2 MBps     7319.2 MBps  |         
+ 170  |  12 x   1048576  |  raw seq  |     6982.7 MBps     7321.9 MBps  |         
+ 171  |  16 x   1048576  |  raw      |     7081.9 MBps     7425.9 MBps  |         
+ 172  |  16 x   1048576  |  raw seq  |     7485.3 MBps     7848.9 MBps  |         
+ 173  |  24 x   1048576  |  raw      |     6683.7 MBps     7008.3 MBps  |         
+ 174  |  24 x   1048576  |  raw seq  |     6839.9 MBps     7172.1 MBps  |         
+ 175  |  32 x   1048576  |  raw      |     6752.7 MBps     7080.7 MBps  |         
+ 176  |  32 x   1048576  |  raw seq  |     6653.1 MBps     6976.3 MBps  |         
+ 177  |   1 x   2097152  |  raw      |     7116.3 MBps     7461.9 MBps  |         
+ 178  |   1 x   2097152  |  raw seq  |     7102.4 MBps     7447.4 MBps  |         
+ 179  |   2 x   2097152  |  raw      |     6926.9 MBps     7263.4 MBps  |         
+ 180  |   2 x   2097152  |  raw seq  |     6844.9 MBps     7177.4 MBps  |         
+ 181  |   4 x   2097152  |  raw      |     8438.0 MBps     8847.9 MBps  |         
+ 182  |   4 x   2097152  |  raw seq  |     8475.3 MBps     8887.0 MBps  |         
+ 183  |   8 x   2097152  |  raw      |     6842.7 MBps     7175.1 MBps  |         
+ 184  |   8 x   2097152  |  raw seq  |     7071.5 MBps     7415.0 MBps  |         
+ 185  |  12 x   2097152  |  raw      |     6509.2 MBps     6825.4 MBps  |         
+ 186  |  12 x   2097152  |  raw seq  |     7398.2 MBps     7757.6 MBps  |         
+ 187  |  16 x   2097152  |  raw      |     6720.4 MBps     7046.8 MBps  |         
+ 188  |  16 x   2097152  |  raw seq  |     6429.2 MBps     6741.5 MBps  |         
+ 189  |  24 x   2097152  |  raw      |     6788.0 MBps     7117.8 MBps  |         
+ 190  |  24 x   2097152  |  raw seq  |     6605.7 MBps     6926.6 MBps  |         
+ 191  |  32 x   2097152  |  raw      |     6857.4 MBps     7190.5 MBps  |         
+ 192  |  32 x   2097152  |  raw seq  |     7202.2 MBps     7552.1 MBps  |         
+ 193  |   1 x   4194304  |  raw      |     6511.0 MBps     6827.2 MBps  |         
+ 194  |   1 x   4194304  |  raw seq  |     6455.6 MBps     6769.1 MBps  |         
+ 195  |   2 x   4194304  |  raw      |     6652.1 MBps     6975.3 MBps  |         
+ 196  |   2 x   4194304  |  raw seq  |     6471.9 MBps     6786.3 MBps  |         
+ 197  |   4 x   4194304  |  raw      |     7586.7 MBps     7955.2 MBps  |         
+ 198  |   4 x   4194304  |  raw seq  |     7433.4 MBps     7794.5 MBps  |         
+ 199  |   8 x   4194304  |  raw      |     6747.6 MBps     7075.3 MBps  |         
+ 200  |   8 x   4194304  |  raw seq  |     6746.8 MBps     7074.5 MBps  |         
+ 201  |  12 x   4194304  |  raw      |     6723.9 MBps     7050.5 MBps  |         
+ 202  |  12 x   4194304  |  raw seq  |     6917.3 MBps     7253.3 MBps  |         
+ 203  |  16 x   4194304  |  raw      |     6798.0 MBps     7128.3 MBps  |         
+ 204  |  16 x   4194304  |  raw seq  |     6712.2 MBps     7038.3 MBps  |         
+ 205  |  24 x   4194304  |  raw      |     6688.6 MBps     7013.5 MBps  |         
+ 206  |  24 x   4194304  |  raw seq  |     6733.5 MBps     7060.6 MBps  |         
+ 207  |  32 x   4194304  |  raw      |     6893.3 MBps     7228.1 MBps  |         
+ 208  |  32 x   4194304  |  raw seq  |     6551.6 MBps     6869.8 MBps  |         
+ 209  |   1 x   8388608  |  raw      |     5990.7 MBps     6281.8 MBps  |         
+ 210  |   1 x   8388608  |  raw seq  |     6042.9 MBps     6336.4 MBps  |         
+ 211  |   2 x   8388608  |  raw      |     6282.4 MBps     6587.6 MBps  |         
+ 212  |   2 x   8388608  |  raw seq  |     6280.8 MBps     6585.9 MBps  |         
+ 213  |   4 x   8388608  |  raw      |     6720.9 MBps     7047.3 MBps  |         
+ 214  |   4 x   8388608  |  raw seq  |     7289.9 MBps     7644.0 MBps  |         
+ 215  |   8 x   8388608  |  raw      |     6927.8 MBps     7264.3 MBps  |         
+ 216  |   8 x   8388608  |  raw seq  |     7158.4 MBps     7506.1 MBps  |         
+ 217  |  12 x   8388608  |  raw      |     6643.3 MBps     6966.0 MBps  |         
+ 218  |  12 x   8388608  |  raw seq  |     6850.3 MBps     7183.0 MBps  |         
+ 219  |  16 x   8388608  |  raw      |     6966.1 MBps     7304.5 MBps  |         
+ 220  |  16 x   8388608  |  raw seq  |     6478.9 MBps     6793.6 MBps  |         
+ 221  |  24 x   8388608  |  raw      |     6803.0 MBps     7133.4 MBps  |         
+ 222  |  24 x   8388608  |  raw seq  |     6770.7 MBps     7099.6 MBps  |         
+ 223  |  32 x   8388608  |  raw      |     6318.2 MBps     6625.1 MBps  |         
+ 224  |  32 x   8388608  |  raw seq  |     6852.9 MBps     7185.8 MBps  |         
+ 225  |   1 x  16777216  |  raw      |     5636.1 MBps     5909.9 MBps  |         
+ 226  |   1 x  16777216  |  raw seq  |     5572.0 MBps     5842.6 MBps  |         
+ 227  |   2 x  16777216  |  raw      |     6117.5 MBps     6414.7 MBps  |         
+ 228  |   2 x  16777216  |  raw seq  |     6074.8 MBps     6369.9 MBps  |         
+ 229  |   4 x  16777216  |  raw      |     7329.5 MBps     7685.5 MBps  |         
+ 230  |   4 x  16777216  |  raw seq  |     7063.1 MBps     7406.2 MBps  |         
+ 231  |   8 x  16777216  |  raw      |     6336.9 MBps     6644.7 MBps  |         
+ 232  |   8 x  16777216  |  raw seq  |     6550.6 MBps     6868.8 MBps  |         
+ 233  |  12 x  16777216  |  raw      |     7046.7 MBps     7389.1 MBps  |         
+ 234  |  12 x  16777216  |  raw seq  |     6546.6 MBps     6864.6 MBps  |         
+ 235  |  16 x  16777216  |  raw      |     6646.1 MBps     6968.9 MBps  |         
+ 236  |  16 x  16777216  |  raw seq  |     7063.7 MBps     7406.8 MBps  |         
+ 237  |   1 x  33554432  |  raw      |     5601.5 MBps     5873.6 MBps  |         
+ 238  |   1 x  33554432  |  raw seq  |     5567.4 MBps     5837.8 MBps  |         
+ 239  |   2 x  33554432  |  raw      |     6165.9 MBps     6465.4 MBps  |         
+ 240  |   2 x  33554432  |  raw seq  |     6253.2 MBps     6556.9 MBps  |         
+ 241  |   4 x  33554432  |  raw      |     6591.2 MBps     6911.4 MBps  |         
+ 242  |   4 x  33554432  |  raw seq  |     6705.8 MBps     7031.5 MBps  |         
+ 243  |   8 x  33554432  |  raw      |     6981.0 MBps     7320.2 MBps  |         
+ 244  |   8 x  33554432  |  raw seq  |     6909.8 MBps     7245.5 MBps  |         
+ 245  |   1 x  67108864  |  raw      |     5605.5 MBps     5877.8 MBps  |         
+ 246  |   1 x  67108864  |  raw seq  |     5610.0 MBps     5882.5 MBps  |         
+ 247  |   2 x  67108864  |  raw      |     6608.2 MBps     6929.2 MBps  |         
+ 248  |   2 x  67108864  |  raw seq  |     6532.5 MBps     6849.9 MBps  |         
+ 249  |   4 x  67108864  |  raw      |     6210.2 MBps     6511.9 MBps  |         
+ 250  |   4 x  67108864  |  raw seq  |     6597.4 MBps     6917.9 MBps  |         
+                                
