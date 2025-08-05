@@ -1,0 +1,15 @@
+# Compiled executables
+*.exe
+*_demo
+*_compat
+udfs_crash_repro_fixed*
+
+# Build artifacts
+*.o
+*.obj
+
+# Temporary test files
+/tmp/
+
+# Log files
+*.log

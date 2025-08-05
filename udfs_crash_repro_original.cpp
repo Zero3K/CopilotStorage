@@ -13,9 +13,9 @@
  * - Sufficient I/O load to trigger the race condition
  * 
  * Compile with: 
- *   RosBE MinGW: g++ -o udfs_crash_repro.exe udfs_crash_repro.cpp -std=c++98 -static-libgcc -static-libstdc++
- *   Cross-compile: i686-w64-mingw32-g++ -o udfs_crash_repro.exe udfs_crash_repro.cpp -std=c++98
- *   Linux (demo): g++ -o udfs_crash_repro udfs_crash_repro.cpp -std=c++98 -DLINUX_DEMO -lpthread
+ *   Windows/ReactOS: cl udfs_crash_repro.cpp /EHsc
+ *   Cross-compile: x86_64-w64-mingw32-g++ -o udfs_crash_repro.exe udfs_crash_repro.cpp -pthread
+ *   Linux (demo): g++ -o udfs_crash_repro udfs_crash_repro.cpp -pthread -DLINUX_DEMO
  * 
  * Run with: ./udfs_crash_repro [path_to_udf_drive]
  */
@@ -24,16 +24,17 @@
 // Linux demo version - shows what the program would do on Windows
 #include <iostream>
 #include <vector>
+#include <thread>
+#include <chrono>
+#include <random>
 #include <string>
+#include <atomic>
 #include <memory>
 #include <fstream>
 #include <cstdio>
 #include <cstring>
-#include <cstdlib>
-#include <ctime>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <pthread.h>
 
 // Mock Windows types for Linux demo
 typedef unsigned long DWORD;
@@ -116,124 +117,24 @@ HANDLE FindFirstFileA(const char* pattern, WIN32_FIND_DATAA* data) {
 bool FindNextFileA(HANDLE find, WIN32_FIND_DATAA* data) { return false; }
 bool FindClose(HANDLE find) { return true; }
 
-// Mock threading functions
-void Sleep(DWORD milliseconds) {
-    usleep(milliseconds * 1000);
-}
-
 #else
 // Real Windows implementation
 #include <windows.h>
 #include <iostream>
 #include <vector>
+#include <thread>
+#include <chrono>
+#include <random>
 #include <string>
+#include <atomic>
 #include <memory>
-#include <cstdlib>
-#include <ctime>
-#include <cstring>
 #endif
-
-// Thread-safe variables using mutex instead of std::atomic
-#ifndef LINUX_DEMO
-static CRITICAL_SECTION g_stopMutex;
-static CRITICAL_SECTION g_threadCountMutex;
-#else
-static pthread_mutex_t g_stopMutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t g_threadCountMutex = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
-static bool g_shouldStop = false;
-static int g_activeThreads = 0;
-
-// Thread-safe getter/setter functions
-bool GetShouldStop() {
-#ifndef LINUX_DEMO
-    EnterCriticalSection(&g_stopMutex);
-    bool result = g_shouldStop;
-    LeaveCriticalSection(&g_stopMutex);
-#else
-    pthread_mutex_lock(&g_stopMutex);
-    bool result = g_shouldStop;
-    pthread_mutex_unlock(&g_stopMutex);
-#endif
-    return result;
-}
-
-void SetShouldStop(bool value) {
-#ifndef LINUX_DEMO
-    EnterCriticalSection(&g_stopMutex);
-    g_shouldStop = value;
-    LeaveCriticalSection(&g_stopMutex);
-#else
-    pthread_mutex_lock(&g_stopMutex);
-    g_shouldStop = value;
-    pthread_mutex_unlock(&g_stopMutex);
-#endif
-}
-
-int GetActiveThreads() {
-#ifndef LINUX_DEMO
-    EnterCriticalSection(&g_threadCountMutex);
-    int result = g_activeThreads;
-    LeaveCriticalSection(&g_threadCountMutex);
-#else
-    pthread_mutex_lock(&g_threadCountMutex);
-    int result = g_activeThreads;
-    pthread_mutex_unlock(&g_threadCountMutex);
-#endif
-    return result;
-}
-
-void IncrementActiveThreads() {
-#ifndef LINUX_DEMO
-    EnterCriticalSection(&g_threadCountMutex);
-    g_activeThreads++;
-    LeaveCriticalSection(&g_threadCountMutex);
-#else
-    pthread_mutex_lock(&g_threadCountMutex);
-    g_activeThreads++;
-    pthread_mutex_unlock(&g_threadCountMutex);
-#endif
-}
-
-void DecrementActiveThreads() {
-#ifndef LINUX_DEMO
-    EnterCriticalSection(&g_threadCountMutex);
-    g_activeThreads--;
-    LeaveCriticalSection(&g_threadCountMutex);
-#else
-    pthread_mutex_lock(&g_threadCountMutex);
-    g_activeThreads--;
-    pthread_mutex_unlock(&g_threadCountMutex);
-#endif
-}
-
-// Portable sleep function
-void PortableSleep(int milliseconds) {
-#ifndef LINUX_DEMO
-    Sleep(milliseconds);
-#else
-    Sleep(milliseconds);
-#endif
-}
-
-void PortableMicroSleep(int microseconds) {
-#ifndef LINUX_DEMO
-    Sleep(microseconds / 1000);
-#else
-    usleep(microseconds);
-#endif
-}
-
-// Thread data structure
-struct ThreadData {
-    int threadId;
-    std::string* testPath;
-};
 
 class UDFSCrashTrigger {
 private:
     std::string testPath;
+    std::atomic<bool> shouldStop{false};
+    std::atomic<int> activeThreads{0};
     
     // Strategic test parameters designed to target specific race condition timing
     static const int NUM_WORKER_THREADS = 12;     // Moderate thread count for optimal race conditions
@@ -247,23 +148,9 @@ private:
     
 public:
     UDFSCrashTrigger(const std::string& path) : testPath(path) {
-        if (!testPath.empty() && testPath[testPath.length() - 1] != '\\' && testPath[testPath.length() - 1] != '/') {
+        if (testPath.back() != '\\' && testPath.back() != '/') {
             testPath += "\\";
         }
-        
-        // Initialize critical sections
-#ifndef LINUX_DEMO
-        InitializeCriticalSection(&g_stopMutex);
-        InitializeCriticalSection(&g_threadCountMutex);
-#endif
-    }
-    
-    ~UDFSCrashTrigger() {
-        // Cleanup critical sections
-#ifndef LINUX_DEMO
-        DeleteCriticalSection(&g_stopMutex);
-        DeleteCriticalSection(&g_threadCountMutex);
-#endif
     }
     
     // Check if we're running on a UDF filesystem
@@ -297,7 +184,7 @@ public:
             return false; // Simulate non-UDF for demo
 #else
             // Check if it's UDF
-            if (strstr(fsName, "UDF") != NULL) {
+            if (strstr(fsName, "UDF") != nullptr) {
                 std::cout << "✓ UDF filesystem detected!" << std::endl;
                 return true;
             } else {
@@ -312,40 +199,9 @@ public:
         return false;
     }
     
-    // Generate random data for file operations
-    static std::vector<char> GenerateRandomData(size_t size) {
-        std::vector<char> data(size);
-        srand((unsigned int)time(NULL) + GetActiveThreads()); // Seed with time + thread variation
-        
-        for (size_t i = 0; i < size; ++i) {
-            data[i] = static_cast<char>(rand() % 256);
-        }
-        return data;
-    }
-    
-    // Generate random number in range
-    static int RandomInRange(int min, int max) {
-        return min + (rand() % (max - min + 1));
-    }
-    
-    // Convert integer to string (replacement for std::to_string)
-    static std::string IntToString(int value) {
-        char buffer[32];
-        sprintf(buffer, "%d", value);
-        return std::string(buffer);
-    }
-    
     // Strategic overflow queue stress targeting specific race condition timing
-#ifndef LINUX_DEMO
-    static DWORD WINAPI OverflowQueueStressWorkerThread(LPVOID param) {
-#else
-    static void* OverflowQueueStressWorkerThread(void* param) {
-#endif
-        ThreadData* data = static_cast<ThreadData*>(param);
-        int threadId = data->threadId;
-        std::string testPath = *(data->testPath);
-        
-        IncrementActiveThreads();
+    void OverflowQueueStressWorker(int threadId) {
+        activeThreads++;
         
         // Set thread to idle priority to reduce system impact
 #ifndef LINUX_DEMO
@@ -356,52 +212,64 @@ public:
         
         std::cout << "OverflowQueue stress thread " << threadId << " started (idle priority)" << std::endl;
         
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> sizeDis(MIN_FILE_SIZE, MAX_FILE_SIZE);
+        
         try {
-            for (int cycle = 0; cycle < OVERFLOW_STRESS_CYCLES && !GetShouldStop(); ++cycle) {
+            for (int cycle = 0; cycle < OVERFLOW_STRESS_CYCLES && !shouldStop; ++cycle) {
                 // Strategic Pattern: Timed create/delete to trigger queue state inconsistency
+                std::vector<std::thread> raceTriggers;
                 for (int i = 0; i < RACE_CONDITION_THREADS; ++i) {
-                    for (int rapid = 0; rapid < 15 && !GetShouldStop(); ++rapid) { // Reduced from 50 to 15
-                        std::string filename = testPath + "overflow_t" + IntToString(threadId) + 
-                                              "_c" + IntToString(cycle) + "_r" + IntToString(i) + 
-                                              "_x" + IntToString(rapid) + ".tmp";
-                        
-                        // Strategic create with moderate flags for better timing
-                        HANDLE hFile = CreateFileA(
-                            filename.c_str(),
-                            GENERIC_WRITE | GENERIC_READ,
-                            FILE_SHARE_READ,  // Allow some sharing to reduce extreme contention
-                            NULL,
-                            CREATE_ALWAYS,
-                            FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH,  // Removed NO_BUFFERING for better timing
-                            NULL
-                        );
-                        
-                        if (hFile != INVALID_HANDLE_VALUE) {
-                            size_t fileSize = RandomInRange(MIN_FILE_SIZE, MAX_FILE_SIZE);
-                            std::vector<char> fileData = GenerateRandomData(fileSize);
+                    raceTriggers.emplace_back([this, threadId, cycle, i, &sizeDis, &gen]() {
+                        for (int rapid = 0; rapid < 15 && !shouldStop; ++rapid) { // Reduced from 50 to 15
+                            std::string filename = testPath + "overflow_t" + std::to_string(threadId) + 
+                                                  "_c" + std::to_string(cycle) + "_r" + std::to_string(i) + 
+                                                  "_x" + std::to_string(rapid) + ".tmp";
                             
-                            DWORD bytesWritten;
-                            WriteFile(hFile, &fileData[0], fileSize, &bytesWritten, NULL);
+                            // Strategic create with moderate flags for better timing
+                            HANDLE hFile = CreateFileA(
+                                filename.c_str(),
+                                GENERIC_WRITE | GENERIC_READ,
+                                FILE_SHARE_READ,  // Allow some sharing to reduce extreme contention
+                                nullptr,
+                                CREATE_ALWAYS,
+                                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH,  // Removed NO_BUFFERING for better timing
+                                nullptr
+                            );
                             
-                            // Strategic seek operations with timing gaps
-                            SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-                            PortableSleep(1); // Small delay for race timing
-                            SetFilePointer(hFile, fileSize / 2, NULL, FILE_BEGIN);
-                            PortableSleep(1);
-                            SetFilePointer(hFile, 0, NULL, FILE_END);
+                            if (hFile != INVALID_HANDLE_VALUE) {
+                                size_t fileSize = sizeDis(gen);
+                                auto data = GenerateRandomData(fileSize);
+                                
+                                DWORD bytesWritten;
+                                WriteFile(hFile, data.data(), fileSize, &bytesWritten, nullptr);
+                                
+                                // Strategic seek operations with timing gaps
+                                SetFilePointer(hFile, 0, nullptr, FILE_BEGIN);
+                                std::this_thread::sleep_for(std::chrono::milliseconds(1)); // Small delay for race timing
+                                SetFilePointer(hFile, fileSize / 2, nullptr, FILE_BEGIN);
+                                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                                SetFilePointer(hFile, 0, nullptr, FILE_END);
+                                
+                                FlushFileBuffers(hFile);
+                                CloseHandle(hFile);
+                            }
                             
-                            FlushFileBuffers(hFile);
-                            CloseHandle(hFile);
+                            // Strategic delay to allow race condition timing window
+                            std::this_thread::sleep_for(std::chrono::microseconds(500));
+                            DeleteFileA(filename.c_str());
                         }
-                        
-                        // Strategic delay to allow race condition timing window
-                        PortableMicroSleep(500);
-                        DeleteFileA(filename.c_str());
-                    }
+                    });
+                }
+                
+                // Wait for all race triggers to complete
+                for (auto& racer : raceTriggers) {
+                    racer.join();
                 }
                 
                 // Strategic delay between cycles to prevent CPU saturation
-                PortableSleep(5);
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
                 
                 if (cycle % 50 == 0) {
                     std::cout << "OverflowQueue thread " << threadId << " completed " << cycle << " cycles" << std::endl;
@@ -412,26 +280,12 @@ public:
         }
         
         std::cout << "OverflowQueue thread " << threadId << " finished" << std::endl;
-        DecrementActiveThreads();
-        
-#ifndef LINUX_DEMO
-        return 0;
-#else
-        return NULL;
-#endif
+        activeThreads--;
     }
     
     // Strategic memory pressure operations to amplify race conditions with controlled timing
-#ifndef LINUX_DEMO
-    static DWORD WINAPI MemoryPressureWorkerThread(LPVOID param) {
-#else
-    static void* MemoryPressureWorkerThread(void* param) {
-#endif
-        ThreadData* data = static_cast<ThreadData*>(param);
-        int threadId = data->threadId;
-        std::string testPath = *(data->testPath);
-        
-        IncrementActiveThreads();
+    void MemoryPressureWorker(int threadId) {
+        activeThreads++;
         
         // Set thread to idle priority to reduce system impact
 #ifndef LINUX_DEMO
@@ -443,23 +297,23 @@ public:
         std::cout << "Memory pressure thread " << threadId << " started (idle priority)" << std::endl;
         
         try {
-            for (int round = 0; round < 50 && !GetShouldStop(); ++round) { // Reduced from 100 to 50
+            for (int round = 0; round < 50 && !shouldStop; ++round) { // Reduced from 100 to 50
                 // Create moderate number of files with strategic timing
                 std::vector<HANDLE> handles;
                 std::vector<std::string> filenames;
                 
-                for (int i = 0; i < 15 && !GetShouldStop(); ++i) { // Reduced from 50 to 15
-                    std::string filename = testPath + "pressure_t" + IntToString(threadId) + 
-                                          "_r" + IntToString(round) + "_f" + IntToString(i) + ".tmp";
+                for (int i = 0; i < 15 && !shouldStop; ++i) { // Reduced from 50 to 15
+                    std::string filename = testPath + "pressure_t" + std::to_string(threadId) + 
+                                          "_r" + std::to_string(round) + "_f" + std::to_string(i) + ".tmp";
                     
                     HANDLE hFile = CreateFileA(
                         filename.c_str(),
                         GENERIC_WRITE,
                         FILE_SHARE_READ | FILE_SHARE_WRITE,
-                        NULL,
+                        nullptr,
                         CREATE_ALWAYS,
                         FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH,
-                        NULL
+                        nullptr
                     );
                     
                     if (hFile != INVALID_HANDLE_VALUE) {
@@ -467,32 +321,32 @@ public:
                         filenames.push_back(filename);
                         
                         // Write reasonable amount of data
-                        std::vector<char> fileData = GenerateRandomData(MIN_FILE_SIZE * 2);
+                        auto data = GenerateRandomData(MIN_FILE_SIZE * 2);
                         DWORD written;
-                        WriteFile(hFile, &fileData[0], fileData.size(), &written, NULL);
+                        WriteFile(hFile, data.data(), data.size(), &written, nullptr);
                         
                         // Strategic delay to allow I/O completion
-                        PortableSleep(2);
+                        std::this_thread::sleep_for(std::chrono::milliseconds(2));
                     }
                 }
                 
                 // Strategic delay before cleanup to allow race condition timing
-                PortableSleep(10);
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 
                 // Now close handles with strategic timing
-                for (size_t j = 0; j < handles.size(); ++j) {
-                    FlushFileBuffers(handles[j]);
-                    CloseHandle(handles[j]);
-                    PortableMicroSleep(100); // Micro-delay for timing
+                for (HANDLE handle : handles) {
+                    FlushFileBuffers(handle);
+                    CloseHandle(handle);
+                    std::this_thread::sleep_for(std::chrono::microseconds(100)); // Micro-delay for timing
                 }
                 
                 // Strategic delay before deletion
-                PortableSleep(5);
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
                 
                 // Delete files with strategic timing
-                for (size_t j = 0; j < filenames.size(); ++j) {
-                    DeleteFileA(filenames[j].c_str());
-                    PortableMicroSleep(200); // Micro-delay for timing
+                for (const std::string& filename : filenames) {
+                    DeleteFileA(filename.c_str());
+                    std::this_thread::sleep_for(std::chrono::microseconds(200)); // Micro-delay for timing
                 }
                 
                 if (round % 10 == 0) {
@@ -500,33 +354,30 @@ public:
                 }
                 
                 // Strategic delay between rounds to prevent CPU saturation
-                PortableSleep(20);
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
             }
         } catch (...) {
             std::cout << "Memory pressure thread " << threadId << " caught exception" << std::endl;
         }
         
         std::cout << "Memory pressure thread " << threadId << " finished" << std::endl;
-        DecrementActiveThreads();
+        activeThreads--;
+    }
+    std::vector<char> GenerateRandomData(size_t size) {
+        std::vector<char> data(size);
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis(0, 255);
         
-#ifndef LINUX_DEMO
-        return 0;
-#else
-        return NULL;
-#endif
+        for (size_t i = 0; i < size; ++i) {
+            data[i] = static_cast<char>(dis(gen));
+        }
+        return data;
     }
     
     // Create and delete files rapidly to stress the driver
-#ifndef LINUX_DEMO
-    static DWORD WINAPI FileStressWorkerThread(LPVOID param) {
-#else
-    static void* FileStressWorkerThread(void* param) {
-#endif
-        ThreadData* data = static_cast<ThreadData*>(param);
-        int threadId = data->threadId;
-        std::string testPath = *(data->testPath);
-        
-        IncrementActiveThreads();
+    void FileStressWorker(int threadId) {
+        activeThreads++;
         
         // Set thread to idle priority to reduce system impact
 #ifndef LINUX_DEMO
@@ -537,173 +388,186 @@ public:
         
         std::cout << "Thread " << threadId << " started (idle priority)" << std::endl;
         
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> sizeDis(MIN_FILE_SIZE, MAX_FILE_SIZE);
+        std::uniform_int_distribution<> burstDis(5, STRATEGIC_BURST_SIZE);
+        
         try {
-            for (int iteration = 0; iteration < ITERATION_COUNT && !GetShouldStop(); ++iteration) {
+            for (int iteration = 0; iteration < ITERATION_COUNT && !shouldStop; ++iteration) {
                 std::vector<std::string> createdFiles;
                 
                 // Phase 1: Strategic burst file creation with controlled timing
-                int burstSize = RandomInRange(5, STRATEGIC_BURST_SIZE);
+                int burstSize = burstDis(gen);
                 for (int i = 0; i < burstSize; ++i) {
-                    if (GetShouldStop()) break;
+                    if (shouldStop) break;
                     
-                    std::string filename = testPath + "stress_t" + IntToString(threadId) + 
-                                          "_i" + IntToString(iteration) + "_f" + IntToString(i) + ".tmp";
+                    std::string filename = testPath + "stress_t" + std::to_string(threadId) + 
+                                          "_i" + std::to_string(iteration) + "_f" + std::to_string(i) + ".tmp";
                     
-                    size_t fileSize = RandomInRange(MIN_FILE_SIZE, MAX_FILE_SIZE);
-                    std::vector<char> fileData = GenerateRandomData(fileSize);
+                    size_t fileSize = sizeDis(gen);
+                    auto data = GenerateRandomData(fileSize);
                     
                     // Create file with strategic flags for race condition timing
                     HANDLE hFile = CreateFileA(
                         filename.c_str(),
                         GENERIC_WRITE | GENERIC_READ,
                         FILE_SHARE_READ,  // Allow sharing to reduce extreme contention
-                        NULL,
+                        nullptr,
                         CREATE_ALWAYS,
                         FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH, // Removed NO_BUFFERING for better timing
-                        NULL
+                        nullptr
                     );
                     
                     if (hFile != INVALID_HANDLE_VALUE) {
                         DWORD bytesWritten;
-                        WriteFile(hFile, &fileData[0], fileSize, &bytesWritten, NULL);
+                        WriteFile(hFile, data.data(), fileSize, &bytesWritten, nullptr);
                         FlushFileBuffers(hFile); // Force immediate flush
                         
                         // Strategic read-back with timing control
-                        SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+                        SetFilePointer(hFile, 0, nullptr, FILE_BEGIN);
                         std::vector<char> readBuffer(fileSize);
                         DWORD bytesRead;
-                        ReadFile(hFile, &readBuffer[0], fileSize, &bytesRead, NULL);
+                        ReadFile(hFile, readBuffer.data(), fileSize, &bytesRead, nullptr);
                         
                         CloseHandle(hFile);
                         createdFiles.push_back(filename);
                     }
                     
                     // Strategic micro-delay to control I/O timing for race conditions
-                    PortableMicroSleep(200);
+                    std::this_thread::sleep_for(std::chrono::microseconds(200));
                 }
                 
                 // Phase 2: Strategic concurrent file operations to create controlled race conditions
-                for (int i = 0; i < 6 && !GetShouldStop(); ++i) { // Reduced from 16 to 6 concurrent operations
-                    std::string concurrentFile = testPath + "race_t" + IntToString(threadId) + 
-                                               "_i" + IntToString(iteration) + "_r" + IntToString(i) + ".tmp";
-                    
-                    // Strategic rapid create/delete cycles with controlled timing
-                    for (int cycle = 0; cycle < 25 && !GetShouldStop(); ++cycle) { // Reduced from 100 to 25 cycles
-                        HANDLE hFile = CreateFileA(
-                            concurrentFile.c_str(),
-                            GENERIC_WRITE | GENERIC_READ,
-                            FILE_SHARE_READ, // Reduced contention
-                            NULL,
-                            CREATE_ALWAYS,
-                            FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH, // Removed DELETE_ON_CLOSE and NO_BUFFERING
-                            NULL
-                        );
+                std::vector<std::thread> concurrentOps;
+                for (int i = 0; i < 6 && !shouldStop; ++i) { // Reduced from 16 to 6 concurrent operations
+                    concurrentOps.emplace_back([this, threadId, iteration, i]() {
+                        std::string concurrentFile = testPath + "race_t" + std::to_string(threadId) + 
+                                                   "_i" + std::to_string(iteration) + "_r" + std::to_string(i) + ".tmp";
                         
-                        if (hFile != INVALID_HANDLE_VALUE) {
-                            std::vector<char> fileData = GenerateRandomData(1024); // Fixed size for consistency
-                            DWORD written;
-                            WriteFile(hFile, &fileData[0], fileData.size(), &written, NULL);
+                        // Strategic rapid create/delete cycles with controlled timing
+                        for (int cycle = 0; cycle < 25 && !shouldStop; ++cycle) { // Reduced from 100 to 25 cycles
+                            HANDLE hFile = CreateFileA(
+                                concurrentFile.c_str(),
+                                GENERIC_WRITE | GENERIC_READ,
+                                FILE_SHARE_READ, // Reduced contention
+                                nullptr,
+                                CREATE_ALWAYS,
+                                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH, // Removed DELETE_ON_CLOSE and NO_BUFFERING
+                                nullptr
+                            );
                             
-                            // Strategic file manipulation with timing control
-                            SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-                            PortableMicroSleep(100);
-                            SetFilePointer(hFile, 512, NULL, FILE_BEGIN);
-                            PortableMicroSleep(100);
-                            SetFilePointer(hFile, 0, NULL, FILE_END);
+                            if (hFile != INVALID_HANDLE_VALUE) {
+                                auto data = GenerateRandomData(1024); // Fixed size for consistency
+                                DWORD written;
+                                WriteFile(hFile, data.data(), data.size(), &written, nullptr);
+                                
+                                // Strategic file manipulation with timing control
+                                SetFilePointer(hFile, 0, nullptr, FILE_BEGIN);
+                                std::this_thread::sleep_for(std::chrono::microseconds(100));
+                                SetFilePointer(hFile, 512, nullptr, FILE_BEGIN);
+                                std::this_thread::sleep_for(std::chrono::microseconds(100));
+                                SetFilePointer(hFile, 0, nullptr, FILE_END);
+                                
+                                FlushFileBuffers(hFile);
+                                
+                                // Read operations with strategic timing
+                                SetFilePointer(hFile, 0, nullptr, FILE_BEGIN);
+                                std::vector<char> readBuf(1024);
+                                DWORD read;
+                                ReadFile(hFile, readBuf.data(), readBuf.size(), &read, nullptr);
+                                
+                                CloseHandle(hFile);
+                            }
                             
-                            FlushFileBuffers(hFile);
+                            // Strategic delay before deletion to create race timing window
+                            std::this_thread::sleep_for(std::chrono::microseconds(300));
+                            DeleteFileA(concurrentFile.c_str());
                             
-                            // Read operations with strategic timing
-                            SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-                            std::vector<char> readBuf(1024);
-                            DWORD read;
-                            ReadFile(hFile, &readBuf[0], readBuf.size(), &read, NULL);
-                            
-                            CloseHandle(hFile);
+                            // Strategic delay between cycles to allow proper timing
+                            std::this_thread::sleep_for(std::chrono::milliseconds(1));
                         }
-                        
-                        // Strategic delay before deletion to create race timing window
-                        PortableMicroSleep(300);
-                        DeleteFileA(concurrentFile.c_str());
-                        
-                        // Strategic delay between cycles to allow proper timing
-                        PortableSleep(1);
-                    }
+                    });
                 }
                 
                 // Phase 3: Directory operations with strategic timing
-                std::string testDir = testPath + "dir_t" + IntToString(threadId) + "_i" + IntToString(iteration);
-                CreateDirectoryA(testDir.c_str(), NULL);
+                std::string testDir = testPath + "dir_t" + std::to_string(threadId) + "_i" + std::to_string(iteration);
+                CreateDirectoryA(testDir.c_str(), nullptr);
                 
                 // Create moderate number of files in directory with strategic timing
-                for (int i = 0; i < 5 && !GetShouldStop(); ++i) { // Reduced from 10 to 5
-                    std::string dirFile = testDir + "\\file" + IntToString(i) + ".tmp";
+                for (int i = 0; i < 5 && !shouldStop; ++i) { // Reduced from 10 to 5
+                    std::string dirFile = testDir + "\\file" + std::to_string(i) + ".tmp";
                     HANDLE hFile = CreateFileA(
                         dirFile.c_str(),
                         GENERIC_WRITE,
                         FILE_SHARE_READ,
-                        NULL,
+                        nullptr,
                         CREATE_ALWAYS,
                         FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH,
-                        NULL
+                        nullptr
                     );
                     
                     if (hFile != INVALID_HANDLE_VALUE) {
-                        std::vector<char> fileData = GenerateRandomData(2048);
+                        auto data = GenerateRandomData(2048);
                         DWORD written;
-                        WriteFile(hFile, &fileData[0], fileData.size(), &written, NULL);
+                        WriteFile(hFile, data.data(), data.size(), &written, nullptr);
                         CloseHandle(hFile);
                     }
                     
                     // Strategic delay between file creations
-                    PortableSleep(2);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                }
+                
+                // Wait for concurrent operations to complete
+                for (auto& op : concurrentOps) {
+                    op.join();
                 }
                 
                 // Phase 4: Strategic deletion burst to trigger the race condition
-                for (size_t j = 0; j < createdFiles.size(); ++j) {
-                    if (GetShouldStop()) break;
-                    DeleteFileA(createdFiles[j].c_str());
-                    PortableMicroSleep(100); // Strategic micro-delay
+                for (const auto& filename : createdFiles) {
+                    if (shouldStop) break;
+                    DeleteFileA(filename.c_str());
+                    std::this_thread::sleep_for(std::chrono::microseconds(100)); // Strategic micro-delay
                 }
                 
                 // Clean up directory files with strategic timing
                 for (int i = 0; i < 5; ++i) {
-                    std::string dirFile = testDir + "\\file" + IntToString(i) + ".tmp";
+                    std::string dirFile = testDir + "\\file" + std::to_string(i) + ".tmp";
                     DeleteFileA(dirFile.c_str());
-                    PortableMicroSleep(100);
+                    std::this_thread::sleep_for(std::chrono::microseconds(100));
                 }
                 RemoveDirectoryA(testDir.c_str());
                 
                 // Phase 5: Strategic file attribute operations with controlled timing
-                std::string attrTestFile = testPath + "attr_t" + IntToString(threadId) + ".tmp";
-                for (int attr = 0; attr < 8 && !GetShouldStop(); ++attr) { // Reduced from 20 to 8
+                std::string attrTestFile = testPath + "attr_t" + std::to_string(threadId) + ".tmp";
+                for (int attr = 0; attr < 8 && !shouldStop; ++attr) { // Reduced from 20 to 8
                     HANDLE hFile = CreateFileA(
                         attrTestFile.c_str(),
                         GENERIC_WRITE,
                         FILE_SHARE_READ | FILE_SHARE_WRITE,
-                        NULL,
+                        nullptr,
                         CREATE_ALWAYS,
                         FILE_ATTRIBUTE_NORMAL,
-                        NULL
+                        nullptr
                     );
                     
                     if (hFile != INVALID_HANDLE_VALUE) {
-                        std::vector<char> fileData = GenerateRandomData(1024);
+                        auto data = GenerateRandomData(1024);
                         DWORD written;
-                        WriteFile(hFile, &fileData[0], fileData.size(), &written, NULL);
+                        WriteFile(hFile, data.data(), data.size(), &written, nullptr);
                         FlushFileBuffers(hFile);
                         
                         // Strategic file pointer operations with timing
-                        SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-                        PortableMicroSleep(50);
-                        SetFilePointer(hFile, 512, NULL, FILE_BEGIN);
-                        PortableMicroSleep(50);
-                        SetFilePointer(hFile, 0, NULL, FILE_END);
+                        SetFilePointer(hFile, 0, nullptr, FILE_BEGIN);
+                        std::this_thread::sleep_for(std::chrono::microseconds(50));
+                        SetFilePointer(hFile, 512, nullptr, FILE_BEGIN);
+                        std::this_thread::sleep_for(std::chrono::microseconds(50));
+                        SetFilePointer(hFile, 0, nullptr, FILE_END);
                         
                         CloseHandle(hFile);
                     }
                     DeleteFileA(attrTestFile.c_str());
-                    PortableSleep(1); // Strategic delay
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1)); // Strategic delay
                 }
                 
                 if (iteration % 25 == 0) {
@@ -711,20 +575,14 @@ public:
                 }
                 
                 // Strategic delay between iterations to prevent CPU saturation
-                PortableSleep(5);
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
         } catch (...) {
             std::cout << "Thread " << threadId << " caught exception" << std::endl;
         }
         
         std::cout << "Thread " << threadId << " finished" << std::endl;
-        DecrementActiveThreads();
-        
-#ifndef LINUX_DEMO
-        return 0;
-#else
-        return NULL;
-#endif
+        activeThreads--;
     }
     
     // Main stress test that tries to trigger the UDFS race condition
@@ -767,77 +625,35 @@ public:
         
         std::cout << "\nStarting strategic kernel crash test..." << std::endl;
         
-        // Create thread data structures - allocate dynamically to avoid dangling pointers
-        std::vector<ThreadData*> threadDataList;
-#ifndef LINUX_DEMO
-        std::vector<HANDLE> workerHandles;
-#else
-        std::vector<pthread_t> workerHandles;
-#endif
-        
         // Start ALL types of worker threads for maximum stress
+        std::vector<std::thread> workers;
         
         // 1. Main file stress workers (most threads)
         for (int i = 0; i < NUM_WORKER_THREADS; ++i) {
-            ThreadData* data = new ThreadData;
-            data->threadId = i;
-            data->testPath = &testPath;
-            threadDataList.push_back(data);
-            
-#ifndef LINUX_DEMO
-            HANDLE handle = CreateThread(NULL, 0, FileStressWorkerThread, data, 0, NULL);
-            workerHandles.push_back(handle);
-#else
-            pthread_t handle;
-            pthread_create(&handle, NULL, FileStressWorkerThread, data);
-            workerHandles.push_back(handle);
-#endif
+            workers.emplace_back(&UDFSCrashTrigger::FileStressWorker, this, i);
         }
         
         // 2. Overflow queue specific stress workers  
         for (int i = 0; i < NUM_WORKER_THREADS / 4; ++i) { // 1/4 as many overflow workers
-            ThreadData* data = new ThreadData;
-            data->threadId = i + 1000;
-            data->testPath = &testPath;
-            threadDataList.push_back(data);
-            
-#ifndef LINUX_DEMO
-            HANDLE handle = CreateThread(NULL, 0, OverflowQueueStressWorkerThread, data, 0, NULL);
-            workerHandles.push_back(handle);
-#else
-            pthread_t handle;
-            pthread_create(&handle, NULL, OverflowQueueStressWorkerThread, data);
-            workerHandles.push_back(handle);
-#endif
+            workers.emplace_back(&UDFSCrashTrigger::OverflowQueueStressWorker, this, i + 1000);
         }
         
         // 3. Memory pressure workers
         for (int i = 0; i < NUM_WORKER_THREADS / 8; ++i) { // 1/8 as many memory workers
-            ThreadData* data = new ThreadData;
-            data->threadId = i + 2000;
-            data->testPath = &testPath;
-            threadDataList.push_back(data);
-            
-#ifndef LINUX_DEMO
-            HANDLE handle = CreateThread(NULL, 0, MemoryPressureWorkerThread, data, 0, NULL);
-            workerHandles.push_back(handle);
-#else
-            pthread_t handle;
-            pthread_create(&handle, NULL, MemoryPressureWorkerThread, data);
-            workerHandles.push_back(handle);
-#endif
+            workers.emplace_back(&UDFSCrashTrigger::MemoryPressureWorker, this, i + 2000);
         }
         
-        std::cout << "Total threads launched: " << workerHandles.size() << " (" << NUM_WORKER_THREADS << " file + " 
+        std::cout << "Total threads launched: " << workers.size() << " (" << NUM_WORKER_THREADS << " file + " 
                   << (NUM_WORKER_THREADS / 4) << " overflow + " << (NUM_WORKER_THREADS / 8) << " memory)" << std::endl;
         
         // Monitor progress and show status with better timing
-        clock_t startTime = clock();
-        while (GetActiveThreads() > 0) {
-            PortableSleep(15000); // Check every 15 seconds (less frequent)
-            clock_t elapsed = (clock() - startTime) / CLOCKS_PER_SEC;
-            std::cout << "Active threads: " << GetActiveThreads() << ", Elapsed: " << elapsed << "s" << std::endl;
-            std::cout << "    STATUS: Strategic stress with " << workerHandles.size() << " total threads targeting UDFS race condition..." << std::endl;
+        auto startTime = std::chrono::steady_clock::now();
+        while (activeThreads > 0) {
+            std::this_thread::sleep_for(std::chrono::seconds(15)); // Check every 15 seconds (less frequent)
+            auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
+                std::chrono::steady_clock::now() - startTime).count();
+            std::cout << "Active threads: " << activeThreads << ", Elapsed: " << elapsed << "s" << std::endl;
+            std::cout << "    STATUS: Strategic stress with " << workers.size() << " total threads targeting UDFS race condition..." << std::endl;
             
             // Show progress updates every 30 seconds
             if (elapsed % 30 == 0 && elapsed > 0) {
@@ -852,23 +668,13 @@ public:
                 std::cout << "3. UDFS overflow queue may be handling strategic stress without race condition" << std::endl;
                 std::cout << "4. Consider running on different hardware/VM configuration" << std::endl;
                 std::cout << "5. Try running multiple instances simultaneously for increased contention" << std::endl;
-                SetShouldStop(true);
+                shouldStop = true;
             }
         }
         
         // Wait for all threads to complete
-        for (size_t i = 0; i < workerHandles.size(); ++i) {
-#ifndef LINUX_DEMO
-            WaitForSingleObject(workerHandles[i], INFINITE);
-            CloseHandle(workerHandles[i]);
-#else
-            pthread_join(workerHandles[i], NULL);
-#endif
-        }
-        
-        // Clean up thread data
-        for (size_t i = 0; i < threadDataList.size(); ++i) {
-            delete threadDataList[i];
+        for (auto& worker : workers) {
+            worker.join();
         }
         
         std::cout << "\nStrategic stress test completed without kernel crash." << std::endl;
@@ -905,9 +711,9 @@ public:
         }
         
         // Also clean race, overflow, pressure, and attr files
-        const char* patterns[] = {"race_*.tmp", "overflow_*.tmp", "pressure_*.tmp", "attr_*.tmp"};
-        for (int p = 0; p < 4; ++p) {
-            searchPattern = testPath + patterns[p];
+        std::vector<std::string> patterns = {"race_*.tmp", "overflow_*.tmp", "pressure_*.tmp", "attr_*.tmp"};
+        for (const auto& pattern : patterns) {
+            searchPattern = testPath + pattern;
             hFind = FindFirstFileA(searchPattern.c_str(), &findData);
             if (hFind != INVALID_HANDLE_VALUE) {
                 do {
@@ -919,13 +725,6 @@ public:
         }
     }
 };
-
-// Helper function for IntToString (moved outside class for global access)
-std::string IntToString(int value) {
-    char buffer[32];
-    sprintf(buffer, "%d", value);
-    return std::string(buffer);
-}
 
 int main(int argc, char* argv[]) {
 #ifdef LINUX_DEMO
@@ -957,7 +756,7 @@ int main(int argc, char* argv[]) {
 #else
             testPath = "C:\\temp\\";
             // Create directory if it doesn't exist
-            CreateDirectoryA(testPath.c_str(), NULL);
+            CreateDirectoryA(testPath.c_str(), nullptr);
 #endif
         }
     }
