@@ -1,0 +1,16 @@
+# Compiled executables
+*.exe
+udfs_crash_repro
+udfs_crash_repro32
+udfs_crash_repro64
+udfs_crash_repro_*
+
+# Build artifacts
+*.o
+*.obj
+*.a
+*.lib
+
+# Temporary files
+*.tmp
+*.temp

@@ -13,12 +13,17 @@
  * - Sufficient I/O load to trigger the race condition
  * 
  * Compile with: 
- *   Windows/ReactOS: cl udfs_crash_repro.cpp /EHsc
- *   Cross-compile: x86_64-w64-mingw32-g++ -o udfs_crash_repro.exe udfs_crash_repro.cpp -pthread
- *   Linux (demo): g++ -o udfs_crash_repro udfs_crash_repro.cpp -pthread -DLINUX_DEMO
+ *   Windows/ReactOS: cl udfs_crash_repro.cpp /EHsc /std:c++11
+ *   Cross-compile: x86_64-w64-mingw32-g++ -std=c++11 -o udfs_crash_repro.exe udfs_crash_repro.cpp -pthread
+ *   Linux (demo): g++ -std=c++11 -o udfs_crash_repro udfs_crash_repro.cpp -pthread -DLINUX_DEMO
  * 
  * Run with: ./udfs_crash_repro [path_to_udf_drive]
  */
+
+// Ensure C++11 or later is being used
+#if __cplusplus < 201103L
+#error "This code requires C++11 or later. Please compile with -std=c++11 or higher."
+#endif
 
 #ifdef LINUX_DEMO
 // Linux demo version - shows what the program would do on Windows
@@ -119,7 +124,10 @@ bool FindClose(HANDLE find) { return true; }
 
 #else
 // Real Windows implementation
-#include <windows.h>
+// Ensure proper threading support for MinGW
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600
+#endif
 #include <iostream>
 #include <vector>
 #include <thread>
@@ -128,6 +136,7 @@ bool FindClose(HANDLE find) { return true; }
 #include <string>
 #include <atomic>
 #include <memory>
+#include <windows.h>
 #endif
 
 class UDFSCrashTrigger {
