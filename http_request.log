@@ -1,0 +1,9 @@
+POST /gql HTTP/1.1
+Host: gql.twitch.tv
+Client-ID: kimne78kx3ncx6brgo4mv6wki5h1ko
+User-Agent: Mozilla/5.0
+Content-Type: application/json
+Content-Length: 555
+Connection: close
+
+[{"operationName":"PlaybackAccessToken","extensions":{"persistedQuery":{"version":1,"sha256Hash":"0828119ded1c13477966434e15800ff57ddacf13ba1911c129dc2200705b0712"}},"variables":{"isLive":true,"login":"twitchplayspokemon","isVod":false,"vodID":"","playerType":"embed"}},{"operationName":"AdRequestHandling","extensions":{"persistedQuery":{"version":1,"sha256Hash":"61a5ecca6da3d924efa9dbde811e051b8a10cb6bd0fe22c372c2f4401f3e88d1"}},"variables":{"isLive":true,"login":"twitchplayspokemon","isVOD":false,"vodID":"","isCollection":false,"collectionID":""}}]
