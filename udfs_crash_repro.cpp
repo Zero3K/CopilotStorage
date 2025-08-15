@@ -7,13 +7,17 @@
  * This program triggers the real race condition in the ReactOS UDFS driver that causes:
  * UNEXPECTED_KERNEL_MODE_TRAP (0x7F) - when RemoveHeadList() is called on corrupted list
  * 
- * ENHANCED: Now simulates Steam's download behavior to trigger crashes more effectively:
- * - Large file downloads (1MB-500MB) similar to game files
- * - Chunked streaming writes like Steam's download engine
- * - Steam-like file naming (.downloading, .tmp, renaming patterns)
- * - Concurrent multi-file downloads simulation
- * - Progress tracking and validation operations
- * - High sustained I/O patterns that match Steam's behavior
+ * ENHANCED v2: Aggressively targets UDFS race condition with overlapping operations:
+ * - 24 high-priority threads for maximum concurrency stress
+ * - Mixed small (4KB-256KB) and large (1-100MB) files to stress different code paths
+ * - Overlapping create/write/read/delete operations (no sequential phases)
+ * - Directory operations mixed with file operations for metadata stress
+ * - Random access patterns mixed with sequential writes
+ * - Multiple concurrent file handles per thread
+ * - Above-normal thread priority for aggressive timing
+ * - No delays between operations for maximum race condition potential
+ * - Immediate flush with no buffering flags for filesystem stress
+ * - Extended runtime (45+ minutes) for sustained race condition targeting
  * 
  * Requirements:
  * - Must be run on ReactOS with the UNFIXED UDFS driver
@@ -234,15 +238,17 @@ struct ThreadData {
     char* testPath;
 };
 
-// Strategic test parameters designed to simulate Steam download behavior
-static const int NUM_WORKER_THREADS = 8;          // Moderate thread count like Steam's concurrent downloads
-static const int FILES_PER_THREAD = 5;            // Fewer, larger files like Steam game downloads  
-static const int MAX_FILE_SIZE = 500 * 1024 * 1024; // Large files up to 500MB (like game files)
-static const int MIN_FILE_SIZE = 1 * 1024 * 1024;   // Minimum 1MB files (realistic game file sizes)
-static const int ITERATION_COUNT = 50;             // Fewer iterations with larger files
-static const int CHUNK_SIZE = 64 * 1024;           // 64KB chunks like Steam's download chunks
-static const int STEAM_PROGRESS_INTERVAL = 10;     // Progress updates every 10 chunks
-static const int CONCURRENT_DOWNLOADS = 3;         // Simulate multiple concurrent game downloads
+// Enhanced parameters designed to trigger UDFS race condition more aggressively
+static const int NUM_WORKER_THREADS = 24;         // High thread count to maximize concurrent operations
+static const int FILES_PER_THREAD = 15;           // More files per thread for increased stress
+static const int MAX_FILE_SIZE = 100 * 1024 * 1024; // Reduced max size for faster operations
+static const int MIN_FILE_SIZE = 4 * 1024;        // Mix small files (4KB) with large ones
+static const int ITERATION_COUNT = 200;           // More iterations for sustained stress
+static const int CHUNK_SIZE = 32 * 1024;          // Smaller chunks for more frequent I/O calls
+static const int STEAM_PROGRESS_INTERVAL = 5;     // More frequent progress updates
+static const int CONCURRENT_DOWNLOADS = 8;        // More concurrent downloads
+static const int SMALL_FILE_RATIO = 4;            // 1 in 4 files will be small (to mix patterns)
+static const int DIRECTORY_OPERATIONS_PER_THREAD = 10; // Add directory stress
 
 // Generate random data for file operations (caller must free the returned pointer)
 char* GenerateRandomData(size_t size) {
@@ -260,6 +266,36 @@ char* GenerateRandomData(size_t size) {
 // Generate random number in range
 int RandomInRange(int min, int max) {
     return min + (rand() % (max - min + 1));
+}
+
+// Generate random file size with mix of small and large files
+size_t GenerateRandomFileSize() {
+    // 25% chance of small file (4KB-256KB), 75% chance of large file (1MB-100MB)
+    if (rand() % SMALL_FILE_RATIO == 0) {
+        return RandomInRange(MIN_FILE_SIZE, 256 * 1024); // Small files: 4KB-256KB
+    } else {
+        return RandomInRange(1024 * 1024, MAX_FILE_SIZE); // Large files: 1MB-100MB
+    }
+}
+
+// Aggressive random access pattern to stress filesystem
+int AggressiveRandomAccess(HANDLE hFile, size_t fileSize) {
+    const int NUM_RANDOM_SEEKS = 20;
+    char buffer[4096];
+    DWORD bytesRead;
+    
+    for (int i = 0; i < NUM_RANDOM_SEEKS; ++i) {
+        // Random seek within file
+        DWORD seekPos = RandomInRange(0, (int)(fileSize > sizeof(buffer) ? fileSize - sizeof(buffer) : 0));
+        SetFilePointer(hFile, seekPos, NULL, FILE_BEGIN);
+        
+        // Random read
+        ReadFile(hFile, buffer, sizeof(buffer), &bytesRead, NULL);
+        
+        // No delay - make it as aggressive as possible
+    }
+    
+    return 1;
 }
 
 // Convert integer to string
@@ -293,7 +329,7 @@ void ShowDownloadProgress(const char* filename, size_t downloaded, size_t total)
            filename, percent, downloaded, total);
 }
 
-// Simulate Steam's chunked download writing
+// Simulate Steam's chunked download writing - Enhanced for race condition triggering
 int SteamChunkedDownload(HANDLE hFile, const char* filename, size_t totalSize) {
     size_t downloaded = 0;
     int chunkCount = 0;
@@ -317,21 +353,31 @@ int SteamChunkedDownload(HANDLE hFile, const char* filename, size_t totalSize) {
             return 0;
         }
         
-        // Force immediate write (Steam flushes frequently)
+        // Aggressive flush - no buffering to stress filesystem immediately
         FlushFileBuffers(hFile);
+        
+        // Random access pattern mixed in to stress different code paths
+        if (chunkCount % 3 == 0 && downloaded > CHUNK_SIZE) {
+            AggressiveRandomAccess(hFile, downloaded);
+        }
         
         downloaded += bytesWritten;
         chunkCount++;
         
-        // Show progress like Steam (every N chunks)
+        // Show progress more frequently
         if (chunkCount % STEAM_PROGRESS_INTERVAL == 0) {
             ShowDownloadProgress(filename, downloaded, totalSize);
         }
         
         free(chunkData);
         
-        // Small delay to simulate network download speed
-        PortableMicroSleep(500);
+        // Reduced delay for more aggressive timing
+        if (totalSize > 1024 * 1024) {
+            // No delay for large files - maximum aggression
+        } else {
+            // Tiny delay for small files to allow some overlap
+            PortableMicroSleep(100);
+        }
     }
     
     return 1;
@@ -406,7 +452,45 @@ int IsUDFFilesystem(const char* testPath) {
     return 0;
 }
 
-// Steam download simulation worker thread function
+// Aggressive directory operations to stress filesystem metadata
+void AggressiveDirectoryOperations(const char* testPath, int threadId) {
+    for (int i = 0; i < DIRECTORY_OPERATIONS_PER_THREAD; ++i) {
+        char dirName[1024];
+        snprintf(dirName, sizeof(dirName), "%sdir_%d_%d", testPath, threadId, i);
+        
+        // Create directory
+        CreateDirectoryA(dirName, NULL);
+        
+        // Create and delete files inside directory rapidly
+        for (int j = 0; j < 5; ++j) {
+            char subFile[1024];
+            snprintf(subFile, sizeof(subFile), "%s\\temp_%d.tmp", dirName, j);
+            
+            HANDLE hSubFile = CreateFileA(
+                subFile, GENERIC_WRITE, 0, NULL, 
+                CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH, NULL);
+            
+            if (hSubFile != INVALID_HANDLE_VALUE) {
+                // Write small amount of data
+                char data[1024] = "temporary data";
+                DWORD bytesWritten;
+                WriteFile(hSubFile, data, sizeof(data), &bytesWritten, NULL);
+                FlushFileBuffers(hSubFile);
+                CloseHandle(hSubFile);
+                
+                // Immediately delete - stress metadata operations
+                DeleteFileA(subFile);
+            }
+        }
+        
+        // Remove directory (stress metadata further)
+        RemoveDirectoryA(dirName);
+        
+        // No delay - maximum aggression
+    }
+}
+
+// Steam download simulation worker thread function - Enhanced for race condition
 #ifndef LINUX_DEMO
 DWORD WINAPI FileStressWorkerThread(LPVOID param) {
 #else
@@ -418,159 +502,151 @@ void* FileStressWorkerThread(void* param) {
     
     IncrementActiveThreads();
     
-    // Set thread to normal priority (Steam uses normal priority for downloads)
+    // Set thread to ABOVE_NORMAL priority for more aggressive timing
 #ifndef LINUX_DEMO
-    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
+    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
 #else
-    printf("[MOCK] SetThreadPriority(THREAD_PRIORITY_NORMAL)\n");
+    printf("[MOCK] SetThreadPriority(THREAD_PRIORITY_ABOVE_NORMAL)\n");
 #endif
     
-    printf("[STEAM] Download thread %d started (simulating Steam game downloads)\n", threadId);
+    printf("[RACE] Aggressive thread %d started (targeting UDFS race condition)\n", threadId);
+    
+    // Pre-allocate file handle arrays for overlapping operations
+    const int MAX_CONCURRENT_FILES = 10;
+    HANDLE activeFiles[MAX_CONCURRENT_FILES];
+    char activeFilenames[MAX_CONCURRENT_FILES][1024];
+    for (int i = 0; i < MAX_CONCURRENT_FILES; ++i) {
+        activeFiles[i] = INVALID_HANDLE_VALUE;
+    }
     
     for (int iteration = 0; iteration < ITERATION_COUNT && !GetShouldStop(); ++iteration) {
-        // Simulate Steam downloading multiple game files concurrently
+        // Phase 0: Aggressive directory operations mixed with file operations
+        if (iteration % 3 == 0) {
+            AggressiveDirectoryOperations(testPath, threadId);
+        }
+        
+        // Phase 1: Create multiple files concurrently (overlapping operations)
         for (int fileIndex = 0; fileIndex < FILES_PER_THREAD && !GetShouldStop(); ++fileIndex) {
+            int slotIndex = fileIndex % MAX_CONCURRENT_FILES;
             
-            // Phase 1: Create .downloading file (Steam's temp download file)
+            // Close previous file in this slot if still open
+            if (activeFiles[slotIndex] != INVALID_HANDLE_VALUE) {
+                CloseHandle(activeFiles[slotIndex]);
+                activeFiles[slotIndex] = INVALID_HANDLE_VALUE;
+            }
+            
             char downloadingFile[1024];
             char finalFile[1024];
             GenerateSteamFileName(threadId, fileIndex, finalFile, sizeof(finalFile));
             snprintf(downloadingFile, sizeof(downloadingFile), "%s%s.downloading", testPath, finalFile);
             snprintf(finalFile, sizeof(finalFile), "%s%s", testPath, finalFile);
             
-            size_t fileSize = RandomInRange(MIN_FILE_SIZE, MAX_FILE_SIZE);
-            printf("[STEAM] Thread %d starting download: %s (%zu bytes)\n", 
-                   threadId, downloadingFile, fileSize);
+            // Store filename for later operations
+            strncpy(activeFilenames[slotIndex], downloadingFile, sizeof(activeFilenames[slotIndex]) - 1);
+            activeFilenames[slotIndex][sizeof(activeFilenames[slotIndex]) - 1] = '\0';
             
-            // Create downloading file with Steam-like flags
-            HANDLE hDownloadFile = CreateFileA(
+            size_t fileSize = GenerateRandomFileSize();
+            printf("[RACE] Thread %d creating: %s (%zu bytes) [slot %d]\n", 
+                   threadId, downloadingFile, fileSize, slotIndex);
+            
+            // Create downloading file with aggressive flags for immediate write-through
+            activeFiles[slotIndex] = CreateFileA(
                 downloadingFile,
                 GENERIC_WRITE | GENERIC_READ,
-                FILE_SHARE_READ,  // Allow reading while downloading
+                FILE_SHARE_READ | FILE_SHARE_WRITE, // Allow concurrent access
                 NULL,
                 CREATE_ALWAYS,
-                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH,
+                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH | FILE_FLAG_NO_BUFFERING,
                 NULL
             );
             
-            if (hDownloadFile == INVALID_HANDLE_VALUE) {
-                printf("[STEAM] Failed to create download file: %s\n", downloadingFile);
+            if (activeFiles[slotIndex] == INVALID_HANDLE_VALUE) {
+                printf("[RACE] Failed to create file: %s\n", downloadingFile);
                 continue;
             }
             
-            // Phase 2: Simulate chunked download (like Steam's streaming download)
-            if (SteamChunkedDownload(hDownloadFile, downloadingFile, fileSize)) {
-                printf("[STEAM] Download completed: %s\n", downloadingFile);
+            // Start download in background while creating more files
+            if (fileSize > 50 * 1024 * 1024) {
+                // For large files, start download but don't wait - overlap operations
+                SteamChunkedDownload(activeFiles[slotIndex], downloadingFile, fileSize > 10*1024*1024 ? 10*1024*1024 : fileSize);
+            } else {
+                // For small files, complete immediately
+                SteamChunkedDownload(activeFiles[slotIndex], downloadingFile, fileSize);
+            }
+            
+            // No delay between file creations - maximum overlap
+        }
+        
+        // Phase 2: Aggressive overlapping validation while creating new files
+        for (int slotIndex = 0; slotIndex < MAX_CONCURRENT_FILES && !GetShouldStop(); ++slotIndex) {
+            if (activeFiles[slotIndex] != INVALID_HANDLE_VALUE) {
+                // Random access validation while other operations are happening
+                DWORD fileSize = SetFilePointer(activeFiles[slotIndex], 0, NULL, FILE_END);
+                if (fileSize > 0) {
+                    AggressiveRandomAccess(activeFiles[slotIndex], fileSize);
+                }
+            }
+        }
+        
+        // Phase 3: Rapid atomic operations (rename, delete) while files are still open
+        for (int fileIndex = 0; fileIndex < FILES_PER_THREAD && !GetShouldStop(); ++fileIndex) {
+            int slotIndex = fileIndex % MAX_CONCURRENT_FILES;
+            
+            if (activeFiles[slotIndex] != INVALID_HANDLE_VALUE) {
+                char finalFile[1024];
+                GenerateSteamFileName(threadId, fileIndex, finalFile, sizeof(finalFile));
+                snprintf(finalFile, sizeof(finalFile), "%s%s", testPath, finalFile);
                 
-                // Phase 3: Validate downloaded file (like Steam's integrity check)
-                ValidateDownloadedFile(hDownloadFile, downloadingFile);
+                // Close the downloading file
+                CloseHandle(activeFiles[slotIndex]);
+                activeFiles[slotIndex] = INVALID_HANDLE_VALUE;
                 
-                CloseHandle(hDownloadFile);
-                
-                // Phase 4: Rename to final file (Steam's atomic completion)
-                printf("[STEAM] Installing: %s -> %s\n", downloadingFile, finalFile);
-                
-                // Steam's pattern: rename temp file to final name
+                // Rapid rename operation (stress metadata)
                 DeleteFileA(finalFile); // Remove if exists
                 
-                // Simulate rename by creating final file and copying content
-                HANDLE hFinalFile = CreateFileA(
-                    finalFile,
-                    GENERIC_WRITE | GENERIC_READ,
-                    FILE_SHARE_READ,
-                    NULL,
-                    CREATE_ALWAYS,
-                    FILE_ATTRIBUTE_NORMAL,
-                    NULL
-                );
-                
-                if (hFinalFile != INVALID_HANDLE_VALUE) {
-                    // Copy content from downloading file to final file
-                    HANDLE hSourceFile = CreateFileA(
-                        downloadingFile,
-                        GENERIC_READ,
-                        FILE_SHARE_READ,
-                        NULL,
-                        OPEN_EXISTING,
-                        FILE_ATTRIBUTE_NORMAL,
-                        NULL
-                    );
-                    
-                    if (hSourceFile != INVALID_HANDLE_VALUE) {
-                        char copyBuffer[CHUNK_SIZE];
+                // Simulate rename by copying (more filesystem stress than Windows rename)
+                HANDLE hSource = CreateFileA(activeFilenames[slotIndex], GENERIC_READ, 
+                                           FILE_SHARE_READ, NULL, OPEN_EXISTING, 
+                                           FILE_ATTRIBUTE_NORMAL, NULL);
+                if (hSource != INVALID_HANDLE_VALUE) {
+                    HANDLE hDest = CreateFileA(finalFile, GENERIC_WRITE, 0, NULL, 
+                                             CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH, NULL);
+                    if (hDest != INVALID_HANDLE_VALUE) {
+                        char copyBuffer[4096];
                         DWORD bytesRead, bytesWritten;
-                        
-                        while (ReadFile(hSourceFile, copyBuffer, sizeof(copyBuffer), &bytesRead, NULL) && bytesRead > 0) {
-                            WriteFile(hFinalFile, copyBuffer, bytesRead, &bytesWritten, NULL);
-                            FlushFileBuffers(hFinalFile);
+                        while (ReadFile(hSource, copyBuffer, sizeof(copyBuffer), &bytesRead, NULL) && bytesRead > 0) {
+                            WriteFile(hDest, copyBuffer, bytesRead, &bytesWritten, NULL);
+                            FlushFileBuffers(hDest); // Stress the filesystem
                         }
-                        
-                        CloseHandle(hSourceFile);
+                        CloseHandle(hDest);
                     }
-                    
-                    CloseHandle(hFinalFile);
+                    CloseHandle(hSource);
                 }
                 
-                // Delete the .downloading file (Steam cleanup)
-                DeleteFileA(downloadingFile);
+                // Immediately delete both files (stress metadata operations)
+                DeleteFileA(activeFilenames[slotIndex]);
+                DeleteFileA(finalFile);
                 
-                printf("[STEAM] Installation complete: %s\n", finalFile);
-                
-            } else {
-                CloseHandle(hDownloadFile);
-                DeleteFileA(downloadingFile);
-                printf("[STEAM] Download failed: %s\n", downloadingFile);
-            }
-            
-            // Simulate concurrent downloads with small delay
-            PortableSleep(100);
-        }
-        
-        // Phase 5: Simulate Steam's post-download verification
-        for (int fileIndex = 0; fileIndex < FILES_PER_THREAD && !GetShouldStop(); ++fileIndex) {
-            char finalFile[1024];
-            GenerateSteamFileName(threadId, fileIndex, finalFile, sizeof(finalFile));
-            snprintf(finalFile, sizeof(finalFile), "%s%s", testPath, finalFile);
-            
-            // Open and validate final file
-            HANDLE hFile = CreateFileA(
-                finalFile,
-                GENERIC_READ,
-                FILE_SHARE_READ,
-                NULL,
-                OPEN_EXISTING,
-                FILE_ATTRIBUTE_NORMAL,
-                NULL
-            );
-            
-            if (hFile != INVALID_HANDLE_VALUE) {
-                ValidateDownloadedFile(hFile, finalFile);
-                CloseHandle(hFile);
+                // No delay - maximum aggression
             }
         }
         
-        // Phase 6: Cleanup (simulate Steam removing old files)
-        for (int fileIndex = 0; fileIndex < FILES_PER_THREAD && !GetShouldStop(); ++fileIndex) {
-            char finalFile[1024];
-            GenerateSteamFileName(threadId, fileIndex, finalFile, sizeof(finalFile));
-            snprintf(finalFile, sizeof(finalFile), "%s%s", testPath, finalFile);
-            
-            printf("[STEAM] Cleaning up: %s\n", finalFile);
-            DeleteFileA(finalFile);
-            
-            // Small delay to simulate Steam's cleanup process
-            PortableSleep(50);
+        if (iteration % 10 == 0) {
+            printf("[RACE] Thread %d completed aggressive iteration %d/%d\n", threadId, iteration, ITERATION_COUNT);
         }
         
-        if (iteration % 5 == 0) {
-            printf("[STEAM] Thread %d completed iteration %d/%d\n", threadId, iteration, ITERATION_COUNT);
-        }
-        
-        // Steam-like delay between download sessions
-        PortableSleep(1000);
+        // Very short delay between iterations for sustained aggression
+        PortableSleep(50);
     }
     
-    printf("[STEAM] Download thread %d finished\n", threadId);
+    // Clean up any remaining open files
+    for (int i = 0; i < MAX_CONCURRENT_FILES; ++i) {
+        if (activeFiles[i] != INVALID_HANDLE_VALUE) {
+            CloseHandle(activeFiles[i]);
+        }
+    }
+    
+    printf("[RACE] Aggressive thread %d finished\n", threadId);
     DecrementActiveThreads();
     
 #ifndef LINUX_DEMO
@@ -580,10 +656,10 @@ void* FileStressWorkerThread(void* param) {
 #endif
 }
 
-// Main stress test that simulates Steam downloading games to trigger UDFS race condition
+// Main stress test that aggressively targets UDFS race condition
 void RunKernelCrashTest(const char* testPath) {
     printf("\n===========================================\n");
-    printf("UDFS KERNEL CRASH TEST (Steam Download Simulator)\n");
+    printf("UDFS KERNEL CRASH TEST (Enhanced Race Condition Targeting)\n");
     printf("===========================================\n");
     printf("⚠️  WARNING: THIS TEST IS DESIGNED TO CRASH THE KERNEL!\n");
     printf("⚠️  SAVE ALL YOUR WORK BEFORE RUNNING!\n");
@@ -592,22 +668,26 @@ void RunKernelCrashTest(const char* testPath) {
     printf("Test path: %s\n", testPath);
     IsUDFFilesystem(testPath);
     
-    printf("\nSimulating Steam download behavior with:\n");
-    printf("- %d download threads (like Steam's concurrent downloads)\n", NUM_WORKER_THREADS);
-    printf("- %d game files per thread per iteration\n", FILES_PER_THREAD);
-    printf("- %d download iterations per thread\n", ITERATION_COUNT);
-    printf("- File sizes: %d MB - %d MB (like game files)\n", MIN_FILE_SIZE/(1024*1024), MAX_FILE_SIZE/(1024*1024));
-    printf("- %d KB download chunks (like Steam's streaming)\n", CHUNK_SIZE/1024);
-    printf("- Steam-like operations: .downloading files, validation, atomic renames\n");
-    printf("- High sustained I/O patterns matching Steam's download engine\n");
+    printf("\nEnhanced aggressive approach targeting UDFS race condition:\n");
+    printf("- %d aggressive threads (HIGH concurrency for race condition)\n", NUM_WORKER_THREADS);
+    printf("- %d mixed files per thread per iteration (small + large)\n", FILES_PER_THREAD);
+    printf("- %d iterations per thread (sustained stress)\n", ITERATION_COUNT);
+    printf("- Mixed file sizes: 4KB-256KB (small) and 1-100MB (large)\n");
+    printf("- %d KB chunks with immediate flush (no buffering)\n", CHUNK_SIZE/1024);
+    printf("- Overlapping operations: create/write/read/delete simultaneously\n");
+    printf("- Directory operations mixed with file operations\n");
+    printf("- Random access patterns mixed with sequential writes\n");
+    printf("- Above-normal thread priority for aggressive timing\n");
+    printf("- No delays between operations for maximum race condition potential\n");
+    printf("- Multiple concurrent file handles per thread\n");
     
-    printf("\nPress Enter to start Steam download simulation to trigger the race condition...\n");
+    printf("\nPress Enter to start aggressive race condition targeting...\n");
 #ifdef LINUX_DEMO
-    printf("[LINUX DEMO] In real ReactOS, this would simulate Steam downloads and attempt to trigger kernel crash!\n");
+    printf("[LINUX DEMO] In real ReactOS, this would aggressively target the UDFS race condition!\n");
 #endif
     getchar();
     
-    printf("\n[STEAM] Starting download simulation...\n");
+    printf("\n[RACE] Starting aggressive race condition targeting...\n");
     
     // Initialize critical sections
 #ifndef LINUX_DEMO
@@ -634,36 +714,62 @@ void RunKernelCrashTest(const char* testPath) {
         return;
     }
     
-    // Start file stress workers
+    // Start aggressive file stress workers
     for (int i = 0; i < NUM_WORKER_THREADS; ++i) {
         threadDataList[i].threadId = i;
         threadDataList[i].testPath = (char*)testPath;
         
 #ifndef LINUX_DEMO
         workerHandles[i] = CreateThread(NULL, 0, FileStressWorkerThread, &threadDataList[i], 0, NULL);
+        if (workerHandles[i] != NULL) {
+            // Set high priority immediately
+            SetThreadPriority(workerHandles[i], THREAD_PRIORITY_ABOVE_NORMAL);
+        }
 #else
         pthread_create(&workerHandles[i], NULL, FileStressWorkerThread, &threadDataList[i]);
 #endif
     }
     
-    printf("[STEAM] Total download threads launched: %d\n", NUM_WORKER_THREADS);
+    printf("[RACE] Total aggressive threads launched: %d\n", NUM_WORKER_THREADS);
+    printf("[RACE] Each thread will perform overlapping file operations to maximize race condition potential\n");
     
-    // Monitor progress like Steam's download manager
+    // Monitor progress with more frequent updates
     clock_t startTime = clock();
+    int lastActiveCount = NUM_WORKER_THREADS;
     while (GetActiveThreads() > 0) {
-        PortableSleep(10000); // Check every 10 seconds (like Steam's UI updates)
+        PortableSleep(5000); // Check every 5 seconds for more responsive monitoring
         clock_t elapsed = (clock() - startTime) / CLOCKS_PER_SEC;
-        printf("[STEAM] Active downloads: %d, Elapsed: %lds\n", GetActiveThreads(), elapsed);
-        printf("    STATUS: Simulating Steam download engine with %d concurrent threads targeting UDFS race condition...\n", NUM_WORKER_THREADS);
+        int currentActive = GetActiveThreads();
         
-        // Extended timeout for large file downloads (30 minutes)
-        if (elapsed > 1800) {
-            printf("\n[STEAM] Download simulation running for 30+ minutes without crash. This suggests:\n");
-            printf("1. Race condition may require very specific timing/hardware conditions\n");
-            printf("2. Driver may be fixed or environment doesn't reproduce the issue\n");
-            printf("3. UDFS may be handling Steam-like I/O patterns without race condition\n");
-            printf("4. Consider running on different hardware/VM configuration\n");
-            printf("5. Try running multiple instances simultaneously for increased Steam-like load\n");
+        printf("[RACE] Active threads: %d, Elapsed: %lds", currentActive, elapsed);
+        if (currentActive < lastActiveCount) {
+            printf(" (threads completing - crash may be imminent!)");
+        }
+        printf("\n");
+        
+        if (elapsed % 30 == 0) { // Every 30 seconds show detailed status
+            printf("    STATUS: %d threads aggressively targeting UDFS race condition with overlapping operations...\n", currentActive);
+            printf("    PATTERN: Mixed small/large files, concurrent handles, directory ops, random access\n");
+        }
+        
+        lastActiveCount = currentActive;
+        
+        // Extended timeout but with more warnings (20 minutes)
+        if (elapsed > 1200) {
+            printf("\n[RACE] Aggressive test running for 20+ minutes without crash.\n");
+            printf("The race condition may require:\n");
+            printf("1. Specific hardware timing conditions (different CPU/VM)\n");
+            printf("2. Specific UDFS driver version vulnerability\n");
+            printf("3. Different UDF format version (try UDF 1.50 vs 2.01)\n");
+            printf("4. Multiple concurrent instances of this program\n");
+            printf("5. Memory pressure from other programs\n");
+            printf("6. The vulnerability may already be patched in this driver version\n");
+            printf("\nContinuing test for maximum chance of reproducing race condition...\n");
+        }
+        
+        // Much longer timeout (45 minutes) for the aggressive approach
+        if (elapsed > 2700) {
+            printf("\n[RACE] Extended aggressive testing (45+ minutes) suggests race condition not triggered.\n");
             SetShouldStop(1);
         }
     }
@@ -687,15 +793,17 @@ void RunKernelCrashTest(const char* testPath) {
     DeleteCriticalSection(&g_threadCountMutex);
 #endif
     
-    printf("\n[STEAM] Download simulation completed without kernel crash.\n");
-    printf("This Steam download simulation used realistic game download patterns:\n");
-    printf("- %d download threads (normal priority, like Steam)\n", NUM_WORKER_THREADS);
-    printf("- %d large files per iteration (%d MB - %d MB each)\n", FILES_PER_THREAD, MIN_FILE_SIZE/(1024*1024), MAX_FILE_SIZE/(1024*1024));
-    printf("- %d KB streaming chunks with progress tracking\n", CHUNK_SIZE/1024);
-    printf("- Steam-like file patterns: .downloading -> final rename\n");
-    printf("- File validation and integrity checking simulation\n");
-    printf("- Concurrent multi-file downloads with sustained high I/O\n");
-    printf("- Atomic file operations and cleanup patterns\n");
+    printf("\n[RACE] Aggressive race condition testing completed without kernel crash.\n");
+    printf("Enhanced approach used:\n");
+    printf("- %d aggressive threads with above-normal priority\n", NUM_WORKER_THREADS);
+    printf("- Mixed small (%dKB-256KB) and large (1-100MB) files\n", MIN_FILE_SIZE/1024);
+    printf("- %d KB chunks with immediate flush (no buffering)\n", CHUNK_SIZE/1024);
+    printf("- Overlapping create/write/read/delete operations\n");
+    printf("- Directory operations mixed with file operations\n");
+    printf("- Random access patterns mixed with sequential operations\n");
+    printf("- Multiple concurrent file handles per thread\n");
+    printf("- No delays between operations for maximum timing stress\n");
+    printf("- Extended runtime for maximum race condition opportunity\n");
 }
 
 // Cleanup any leftover Steam download files
@@ -738,14 +846,14 @@ void Cleanup(const char* testPath) {
 
 int main(int argc, char* argv[]) {
 #ifdef LINUX_DEMO
-    printf("UDFS Driver REAL KERNEL CRASH Test (Steam Download Simulator - Linux Demo Mode)\n");
+    printf("UDFS Driver REAL KERNEL CRASH Test (Enhanced Race Condition Targeting - Linux Demo Mode)\n");
 #else
-    printf("UDFS Driver REAL KERNEL CRASH Test (Steam Download Simulator)\n");
+    printf("UDFS Driver REAL KERNEL CRASH Test (Enhanced Race Condition Targeting)\n");
 #endif
     printf("====================================================================\n");
-    printf("This program simulates Steam's download behavior to trigger the actual UDFS\n");
-    printf("driver race condition that causes UNEXPECTED_KERNEL_MODE_TRAP (0x7F) BSOD.\n");
-    printf("Steam's large file downloads with chunked writes may trigger crashes more effectively.\n");
+    printf("This program aggressively targets the UDFS driver race condition that causes\n");
+    printf("UNEXPECTED_KERNEL_MODE_TRAP (0x7F) BSOD using overlapping concurrent operations.\n");
+    printf("Enhanced approach uses 24 threads with mixed file sizes and no operation delays.\n");
     
     char testPath[1024];
     if (argc > 1) {
