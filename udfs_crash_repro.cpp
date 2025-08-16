@@ -7,17 +7,20 @@
  * This program triggers the real race condition in the ReactOS UDFS driver that causes:
  * UNEXPECTED_KERNEL_MODE_TRAP (0x7F) - when RemoveHeadList() is called on corrupted list
  * 
- * ENHANCED v2: Aggressively targets UDFS race condition with overlapping operations:
- * - 24 high-priority threads for maximum concurrency stress
- * - Mixed small (4KB-256KB) and large (1-100MB) files to stress different code paths
+ * EXTREME v3: Maximally aggressively targets UDFS race condition with overlapping operations:
+ * - 48 EXTREME threads for maximum concurrency stress that race conditions require
+ * - Mixed tiny (1KB-64KB) and medium (500KB-50MB) files to stress different code paths  
  * - Overlapping create/write/read/delete operations (no sequential phases)
  * - Directory operations mixed with file operations for metadata stress
+ * - Rapid file churn cycles specifically targeting race conditions
+ * - Memory pressure operations to compound filesystem stress
  * - Random access patterns mixed with sequential writes
- * - Multiple concurrent file handles per thread
+ * - 20 concurrent file handles per thread (EXTREME concurrency)
  * - Above-normal thread priority for aggressive timing
- * - No delays between operations for maximum race condition potential
- * - Immediate flush with no buffering flags for filesystem stress
- * - Extended runtime (45+ minutes) for sustained race condition targeting
+ * - NO delays between operations - pure aggression for maximum race condition potential
+ * - Thread yielding at critical moments for race condition timing
+ * - Immediate flush with no-buffering flags for filesystem stress
+ * - Extended runtime (60+ minutes) for sustained race condition targeting
  * 
  * Requirements:
  * - Must be run on ReactOS with the UNFIXED UDFS driver
@@ -238,17 +241,18 @@ struct ThreadData {
     char* testPath;
 };
 
-// Enhanced parameters designed to trigger UDFS race condition more aggressively
-static const int NUM_WORKER_THREADS = 24;         // High thread count to maximize concurrent operations
-static const int FILES_PER_THREAD = 15;           // More files per thread for increased stress
-static const int MAX_FILE_SIZE = 100 * 1024 * 1024; // Reduced max size for faster operations
-static const int MIN_FILE_SIZE = 4 * 1024;        // Mix small files (4KB) with large ones
-static const int ITERATION_COUNT = 200;           // More iterations for sustained stress
-static const int CHUNK_SIZE = 32 * 1024;          // Smaller chunks for more frequent I/O calls
-static const int STEAM_PROGRESS_INTERVAL = 5;     // More frequent progress updates
-static const int CONCURRENT_DOWNLOADS = 8;        // More concurrent downloads
-static const int SMALL_FILE_RATIO = 4;            // 1 in 4 files will be small (to mix patterns)
-static const int DIRECTORY_OPERATIONS_PER_THREAD = 10; // Add directory stress
+// EXTREME parameters designed to trigger UDFS race condition with maximum aggression
+static const int NUM_WORKER_THREADS = 48;         // EXTREME thread count to maximize concurrent operations
+static const int FILES_PER_THREAD = 25;           // More files per thread for increased stress
+static const int MAX_FILE_SIZE = 50 * 1024 * 1024; // Smaller max size for faster operations and more churn
+static const int MIN_FILE_SIZE = 1024;             // Even smaller files (1KB) for rapid operations
+static const int ITERATION_COUNT = 500;           // Many more iterations for sustained stress
+static const int CHUNK_SIZE = 8 * 1024;           // Much smaller chunks for more frequent filesystem calls
+static const int STEAM_PROGRESS_INTERVAL = 3;     // More frequent progress updates
+static const int CONCURRENT_DOWNLOADS = 12;       // More concurrent downloads
+static const int SMALL_FILE_RATIO = 2;            // 1 in 2 files will be small (more rapid operations)
+static const int DIRECTORY_OPERATIONS_PER_THREAD = 20; // More directory stress
+static const int MAX_CONCURRENT_FILES_PER_THREAD = 20; // More concurrent file handles per thread
 
 // Generate random data for file operations (caller must free the returned pointer)
 char* GenerateRandomData(size_t size) {
@@ -268,20 +272,20 @@ int RandomInRange(int min, int max) {
     return min + (rand() % (max - min + 1));
 }
 
-// Generate random file size with mix of small and large files
+// Generate random file size with mix of small and large files (more aggressive)
 size_t GenerateRandomFileSize() {
-    // 25% chance of small file (4KB-256KB), 75% chance of large file (1MB-100MB)
+    // 50% chance of tiny file (1KB-64KB), 50% chance of medium file (500KB-50MB)
     if (rand() % SMALL_FILE_RATIO == 0) {
-        return RandomInRange(MIN_FILE_SIZE, 256 * 1024); // Small files: 4KB-256KB
+        return RandomInRange(MIN_FILE_SIZE, 64 * 1024); // Tiny files: 1KB-64KB for rapid operations
     } else {
-        return RandomInRange(1024 * 1024, MAX_FILE_SIZE); // Large files: 1MB-100MB
+        return RandomInRange(500 * 1024, MAX_FILE_SIZE); // Medium files: 500KB-50MB
     }
 }
 
-// Aggressive random access pattern to stress filesystem
+// Aggressive random access pattern to stress filesystem (more extreme)
 int AggressiveRandomAccess(HANDLE hFile, size_t fileSize) {
-    const int NUM_RANDOM_SEEKS = 20;
-    char buffer[4096];
+    const int NUM_RANDOM_SEEKS = 50; // More random seeks
+    char buffer[1024]; // Smaller buffer for more calls
     DWORD bytesRead;
     
     for (int i = 0; i < NUM_RANDOM_SEEKS; ++i) {
@@ -289,13 +293,75 @@ int AggressiveRandomAccess(HANDLE hFile, size_t fileSize) {
         DWORD seekPos = RandomInRange(0, (int)(fileSize > sizeof(buffer) ? fileSize - sizeof(buffer) : 0));
         SetFilePointer(hFile, seekPos, NULL, FILE_BEGIN);
         
-        // Random read
+        // Random read with immediate flush
         ReadFile(hFile, buffer, sizeof(buffer), &bytesRead, NULL);
         
-        // No delay - make it as aggressive as possible
+        // Force cache invalidation every few operations
+        if (i % 3 == 0) {
+            FlushFileBuffers(hFile);
+        }
+        
+        // Yield control to increase chance of race condition
+#ifndef LINUX_DEMO
+        if (i % 5 == 0) {
+            Sleep(0); // Yield to other threads
+        }
+#endif
     }
     
     return 1;
+}
+
+// EXTREME memory pressure to compound filesystem stress
+void CreateMemoryPressure() {
+    const size_t MEMORY_BLOCK_SIZE = 10 * 1024 * 1024; // 10MB blocks
+    const int NUM_BLOCKS = 50; // 500MB total
+    
+    void* memoryBlocks[NUM_BLOCKS];
+    for (int i = 0; i < NUM_BLOCKS; ++i) {
+        memoryBlocks[i] = malloc(MEMORY_BLOCK_SIZE);
+        if (memoryBlocks[i]) {
+            // Touch the memory to force allocation
+            memset(memoryBlocks[i], i % 256, MEMORY_BLOCK_SIZE);
+        }
+    }
+    
+    // Quick cleanup to avoid memory leak
+    for (int i = 0; i < NUM_BLOCKS; ++i) {
+        if (memoryBlocks[i]) {
+            free(memoryBlocks[i]);
+        }
+    }
+}
+
+// Race condition targeting: rapid file creation/deletion cycles
+void RapidFileChurnCycle(const char* testPath, int threadId, int cycleId) {
+    for (int i = 0; i < 30; ++i) { // 30 rapid operations
+        char fileName[1024];
+        snprintf(fileName, sizeof(fileName), "%srace_%d_%d_%d.tmp", testPath, threadId, cycleId, i);
+        
+        // Create file
+        HANDLE hFile = CreateFileA(fileName, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 
+                                  NULL, CREATE_ALWAYS, 
+                                  FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH | FILE_FLAG_NO_BUFFERING, 
+                                  NULL);
+        if (hFile != INVALID_HANDLE_VALUE) {
+            // Write minimal data
+            char data[16] = "x";
+            DWORD written;
+            WriteFile(hFile, data, sizeof(data), &written, NULL);
+            FlushFileBuffers(hFile);
+            CloseHandle(hFile);
+        }
+        
+        // Immediately delete
+        DeleteFileA(fileName);
+        
+        // Thread yield to maximize race condition timing
+#ifndef LINUX_DEMO
+        Sleep(0);
+#endif
+    }
 }
 
 // Convert integer to string
@@ -371,12 +437,11 @@ int SteamChunkedDownload(HANDLE hFile, const char* filename, size_t totalSize) {
         
         free(chunkData);
         
-        // Reduced delay for more aggressive timing
+        // Reduced delay for more aggressive timing (EXTREME - no delays!)
         if (totalSize > 1024 * 1024) {
-            // No delay for large files - maximum aggression
+            // No delay at all for large files - maximum aggression
         } else {
-            // Tiny delay for small files to allow some overlap
-            PortableMicroSleep(100);
+            // No delay even for small files - pure aggression
         }
     }
     
@@ -452,7 +517,7 @@ int IsUDFFilesystem(const char* testPath) {
     return 0;
 }
 
-// Aggressive directory operations to stress filesystem metadata
+// EXTREME directory operations to stress filesystem metadata
 void AggressiveDirectoryOperations(const char* testPath, int threadId) {
     for (int i = 0; i < DIRECTORY_OPERATIONS_PER_THREAD; ++i) {
         char dirName[1024];
@@ -461,18 +526,18 @@ void AggressiveDirectoryOperations(const char* testPath, int threadId) {
         // Create directory
         CreateDirectoryA(dirName, NULL);
         
-        // Create and delete files inside directory rapidly
-        for (int j = 0; j < 5; ++j) {
+        // Create and delete files inside directory rapidly (more files)
+        for (int j = 0; j < 15; ++j) {
             char subFile[1024];
             snprintf(subFile, sizeof(subFile), "%s\\temp_%d.tmp", dirName, j);
             
             HANDLE hSubFile = CreateFileA(
                 subFile, GENERIC_WRITE, 0, NULL, 
-                CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH, NULL);
+                CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH | FILE_FLAG_NO_BUFFERING, NULL);
             
             if (hSubFile != INVALID_HANDLE_VALUE) {
-                // Write small amount of data
-                char data[1024] = "temporary data";
+                // Write tiny amount of data (stress metadata more than data)
+                char data[256] = "temp";
                 DWORD bytesWritten;
                 WriteFile(hSubFile, data, sizeof(data), &bytesWritten, NULL);
                 FlushFileBuffers(hSubFile);
@@ -481,12 +546,20 @@ void AggressiveDirectoryOperations(const char* testPath, int threadId) {
                 // Immediately delete - stress metadata operations
                 DeleteFileA(subFile);
             }
+            
+            // Yield control to maximize race conditions
+#ifndef LINUX_DEMO
+            Sleep(0);
+#endif
         }
         
         // Remove directory (stress metadata further)
         RemoveDirectoryA(dirName);
         
-        // No delay - maximum aggression
+        // No delay - maximum aggression, yield to increase race condition chance
+#ifndef LINUX_DEMO
+        Sleep(0);
+#endif
     }
 }
 
@@ -509,23 +582,33 @@ void* FileStressWorkerThread(void* param) {
     printf("[MOCK] SetThreadPriority(THREAD_PRIORITY_ABOVE_NORMAL)\n");
 #endif
     
-    printf("[RACE] Aggressive thread %d started (targeting UDFS race condition)\n", threadId);
+    printf("[RACE] Aggressive thread %d started (EXTREME targeting UDFS race condition)\n", threadId);
     
-    // Pre-allocate file handle arrays for overlapping operations
-    const int MAX_CONCURRENT_FILES = 10;
-    HANDLE activeFiles[MAX_CONCURRENT_FILES];
-    char activeFilenames[MAX_CONCURRENT_FILES][1024];
+    // Pre-allocate file handle arrays for overlapping operations (MORE concurrent files)
+    const int MAX_CONCURRENT_FILES = MAX_CONCURRENT_FILES_PER_THREAD;
+    HANDLE activeFiles[MAX_CONCURRENT_FILES_PER_THREAD];
+    char activeFilenames[MAX_CONCURRENT_FILES_PER_THREAD][1024];
     for (int i = 0; i < MAX_CONCURRENT_FILES; ++i) {
         activeFiles[i] = INVALID_HANDLE_VALUE;
     }
     
     for (int iteration = 0; iteration < ITERATION_COUNT && !GetShouldStop(); ++iteration) {
-        // Phase 0: Aggressive directory operations mixed with file operations
+        // Phase 0: Create memory pressure every 10 iterations
+        if (iteration % 10 == 0) {
+            CreateMemoryPressure();
+        }
+        
+        // Phase 1: Rapid file churn cycles to target race conditions
+        if (iteration % 5 == 0) {
+            RapidFileChurnCycle(testPath, threadId, iteration);
+        }
+        
+        // Phase 2: EXTREME directory operations mixed with file operations
         if (iteration % 3 == 0) {
             AggressiveDirectoryOperations(testPath, threadId);
         }
         
-        // Phase 1: Create multiple files concurrently (overlapping operations)
+        // Phase 3: Create multiple files concurrently (overlapping operations) with EXTREME concurrency
         for (int fileIndex = 0; fileIndex < FILES_PER_THREAD && !GetShouldStop(); ++fileIndex) {
             int slotIndex = fileIndex % MAX_CONCURRENT_FILES;
             
@@ -577,7 +660,7 @@ void* FileStressWorkerThread(void* param) {
             // No delay between file creations - maximum overlap
         }
         
-        // Phase 2: Aggressive overlapping validation while creating new files
+        // Phase 4: EXTREME overlapping validation while creating new files
         for (int slotIndex = 0; slotIndex < MAX_CONCURRENT_FILES && !GetShouldStop(); ++slotIndex) {
             if (activeFiles[slotIndex] != INVALID_HANDLE_VALUE) {
                 // Random access validation while other operations are happening
@@ -588,7 +671,7 @@ void* FileStressWorkerThread(void* param) {
             }
         }
         
-        // Phase 3: Rapid atomic operations (rename, delete) while files are still open
+        // Phase 5: EXTREME rapid atomic operations (rename, delete) while files are still open
         for (int fileIndex = 0; fileIndex < FILES_PER_THREAD && !GetShouldStop(); ++fileIndex) {
             int slotIndex = fileIndex % MAX_CONCURRENT_FILES;
             
@@ -631,12 +714,15 @@ void* FileStressWorkerThread(void* param) {
             }
         }
         
-        if (iteration % 10 == 0) {
-            printf("[RACE] Thread %d completed aggressive iteration %d/%d\n", threadId, iteration, ITERATION_COUNT);
+        if (iteration % 5 == 0) {
+            printf("[RACE] Thread %d completed EXTREME iteration %d/%d\n", threadId, iteration, ITERATION_COUNT);
         }
         
-        // Very short delay between iterations for sustained aggression
-        PortableSleep(50);
+        // NO delays between iterations for maximum sustained aggression
+        // Thread yield to increase race condition timing
+#ifndef LINUX_DEMO
+        Sleep(0);
+#endif
     }
     
     // Clean up any remaining open files
@@ -646,7 +732,7 @@ void* FileStressWorkerThread(void* param) {
         }
     }
     
-    printf("[RACE] Aggressive thread %d finished\n", threadId);
+    printf("[RACE] EXTREME aggressive thread %d finished\n", threadId);
     DecrementActiveThreads();
     
 #ifndef LINUX_DEMO
@@ -659,7 +745,7 @@ void* FileStressWorkerThread(void* param) {
 // Main stress test that aggressively targets UDFS race condition
 void RunKernelCrashTest(const char* testPath) {
     printf("\n===========================================\n");
-    printf("UDFS KERNEL CRASH TEST (Enhanced Race Condition Targeting)\n");
+    printf("UDFS KERNEL CRASH TEST (EXTREME Race Condition Targeting)\n");
     printf("===========================================\n");
     printf("⚠️  WARNING: THIS TEST IS DESIGNED TO CRASH THE KERNEL!\n");
     printf("⚠️  SAVE ALL YOUR WORK BEFORE RUNNING!\n");
@@ -668,26 +754,29 @@ void RunKernelCrashTest(const char* testPath) {
     printf("Test path: %s\n", testPath);
     IsUDFFilesystem(testPath);
     
-    printf("\nEnhanced aggressive approach targeting UDFS race condition:\n");
-    printf("- %d aggressive threads (HIGH concurrency for race condition)\n", NUM_WORKER_THREADS);
-    printf("- %d mixed files per thread per iteration (small + large)\n", FILES_PER_THREAD);
-    printf("- %d iterations per thread (sustained stress)\n", ITERATION_COUNT);
-    printf("- Mixed file sizes: 4KB-256KB (small) and 1-100MB (large)\n");
+    printf("\nEXTREME aggressive approach targeting UDFS race condition:\n");
+    printf("- %d EXTREME threads (MAXIMUM concurrency for race condition)\n", NUM_WORKER_THREADS);
+    printf("- %d mixed files per thread per iteration (tiny + medium)\n", FILES_PER_THREAD);
+    printf("- %d iterations per thread (sustained extreme stress)\n", ITERATION_COUNT);
+    printf("- Mixed file sizes: 1KB-64KB (tiny) and 500KB-50MB (medium)\n");
     printf("- %d KB chunks with immediate flush (no buffering)\n", CHUNK_SIZE/1024);
     printf("- Overlapping operations: create/write/read/delete simultaneously\n");
     printf("- Directory operations mixed with file operations\n");
+    printf("- Rapid file churn cycles targeting race conditions\n");
+    printf("- Memory pressure operations to compound stress\n");
     printf("- Random access patterns mixed with sequential writes\n");
     printf("- Above-normal thread priority for aggressive timing\n");
-    printf("- No delays between operations for maximum race condition potential\n");
-    printf("- Multiple concurrent file handles per thread\n");
+    printf("- NO delays between operations - PURE aggression\n");
+    printf("- %d concurrent file handles per thread (EXTREME concurrency)\n", MAX_CONCURRENT_FILES_PER_THREAD);
+    printf("- Thread yielding at critical moments for race condition timing\n");
     
-    printf("\nPress Enter to start aggressive race condition targeting...\n");
+    printf("\nPress Enter to start EXTREME race condition targeting...\n");
 #ifdef LINUX_DEMO
-    printf("[LINUX DEMO] In real ReactOS, this would aggressively target the UDFS race condition!\n");
+    printf("[LINUX DEMO] In real ReactOS, this would EXTREMELY aggressively target the UDFS race condition!\n");
 #endif
     getchar();
     
-    printf("\n[RACE] Starting aggressive race condition targeting...\n");
+    printf("\n[RACE] Starting EXTREME race condition targeting...\n");
     
     // Initialize critical sections
 #ifndef LINUX_DEMO
@@ -730,8 +819,8 @@ void RunKernelCrashTest(const char* testPath) {
 #endif
     }
     
-    printf("[RACE] Total aggressive threads launched: %d\n", NUM_WORKER_THREADS);
-    printf("[RACE] Each thread will perform overlapping file operations to maximize race condition potential\n");
+    printf("[RACE] Total EXTREME threads launched: %d\n", NUM_WORKER_THREADS);
+    printf("[RACE] Each thread will perform overlapping file operations with maximum aggression to trigger race conditions\n");
     
     // Monitor progress with more frequent updates
     clock_t startTime = clock();
@@ -748,28 +837,29 @@ void RunKernelCrashTest(const char* testPath) {
         printf("\n");
         
         if (elapsed % 30 == 0) { // Every 30 seconds show detailed status
-            printf("    STATUS: %d threads aggressively targeting UDFS race condition with overlapping operations...\n", currentActive);
-            printf("    PATTERN: Mixed small/large files, concurrent handles, directory ops, random access\n");
+            printf("    STATUS: %d threads EXTREMELY aggressively targeting UDFS race condition with overlapping operations...\n", currentActive);
+            printf("    PATTERN: Mixed tiny/medium files, %d concurrent handles per thread, directory ops, random access, memory pressure\n", MAX_CONCURRENT_FILES_PER_THREAD);
         }
         
         lastActiveCount = currentActive;
         
-        // Extended timeout but with more warnings (20 minutes)
-        if (elapsed > 1200) {
-            printf("\n[RACE] Aggressive test running for 20+ minutes without crash.\n");
+        // Extended timeout but with more warnings (30 minutes for extreme approach)
+        if (elapsed > 1800) {
+            printf("\n[RACE] EXTREME test running for 30+ minutes without crash.\n");
             printf("The race condition may require:\n");
             printf("1. Specific hardware timing conditions (different CPU/VM)\n");
             printf("2. Specific UDFS driver version vulnerability\n");
             printf("3. Different UDF format version (try UDF 1.50 vs 2.01)\n");
             printf("4. Multiple concurrent instances of this program\n");
             printf("5. Memory pressure from other programs\n");
-            printf("6. The vulnerability may already be patched in this driver version\n");
-            printf("\nContinuing test for maximum chance of reproducing race condition...\n");
+            printf("6. Different filesystem block size or cluster configuration\n");
+            printf("7. The vulnerability may already be patched in this driver version\n");
+            printf("\nContinuing EXTREME test for maximum chance of reproducing race condition...\n");
         }
         
-        // Much longer timeout (45 minutes) for the aggressive approach
-        if (elapsed > 2700) {
-            printf("\n[RACE] Extended aggressive testing (45+ minutes) suggests race condition not triggered.\n");
+        // Much longer timeout (60 minutes) for the extreme approach
+        if (elapsed > 3600) {
+            printf("\n[RACE] Extended EXTREME testing (60+ minutes) suggests race condition not triggered.\n");
             SetShouldStop(1);
         }
     }
@@ -793,16 +883,19 @@ void RunKernelCrashTest(const char* testPath) {
     DeleteCriticalSection(&g_threadCountMutex);
 #endif
     
-    printf("\n[RACE] Aggressive race condition testing completed without kernel crash.\n");
-    printf("Enhanced approach used:\n");
-    printf("- %d aggressive threads with above-normal priority\n", NUM_WORKER_THREADS);
-    printf("- Mixed small (%dKB-256KB) and large (1-100MB) files\n", MIN_FILE_SIZE/1024);
+    printf("\n[RACE] EXTREME race condition testing completed without kernel crash.\n");
+    printf("EXTREME approach used:\n");
+    printf("- %d EXTREME threads with above-normal priority\n", NUM_WORKER_THREADS);
+    printf("- Mixed tiny (%dKB-64KB) and medium (500KB-50MB) files\n", MIN_FILE_SIZE/1024);
     printf("- %d KB chunks with immediate flush (no buffering)\n", CHUNK_SIZE/1024);
     printf("- Overlapping create/write/read/delete operations\n");
     printf("- Directory operations mixed with file operations\n");
+    printf("- Rapid file churn cycles targeting race conditions\n");
+    printf("- Memory pressure operations to compound filesystem stress\n");
     printf("- Random access patterns mixed with sequential operations\n");
-    printf("- Multiple concurrent file handles per thread\n");
-    printf("- No delays between operations for maximum timing stress\n");
+    printf("- %d concurrent file handles per thread (EXTREME concurrency)\n", MAX_CONCURRENT_FILES_PER_THREAD);
+    printf("- NO delays between operations for pure timing aggression\n");
+    printf("- Thread yielding at critical moments for race condition timing\n");
     printf("- Extended runtime for maximum race condition opportunity\n");
 }
 
@@ -853,7 +946,7 @@ int main(int argc, char* argv[]) {
     printf("====================================================================\n");
     printf("This program aggressively targets the UDFS driver race condition that causes\n");
     printf("UNEXPECTED_KERNEL_MODE_TRAP (0x7F) BSOD using overlapping concurrent operations.\n");
-    printf("Enhanced approach uses 24 threads with mixed file sizes and no operation delays.\n");
+    printf("Enhanced approach uses 48 threads with mixed file sizes and NO operation delays.\n");
     
     char testPath[1024];
     if (argc > 1) {
